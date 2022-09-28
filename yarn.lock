@@ -15,6 +15,62 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@ankitchiplunkar/Gobbler-Valut@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@ankitchiplunkar/Gobbler-Valut@workspace:."
+  dependencies:
+    "@commitlint/cli": ^17.0.3
+    "@commitlint/config-conventional": ^17.0.3
+    "@ethersproject/abi": ^5.6.4
+    "@ethersproject/abstract-signer": ^5.6.2
+    "@ethersproject/bignumber": ^5.6.2
+    "@ethersproject/bytes": ^5.6.1
+    "@ethersproject/providers": ^5.6.8
+    "@nomicfoundation/hardhat-chai-matchers": ^1.0.2
+    "@nomicfoundation/hardhat-network-helpers": ^1.0.3
+    "@nomicfoundation/hardhat-toolbox": ^1.0.2
+    "@nomiclabs/hardhat-ethers": ^2.1.0
+    "@nomiclabs/hardhat-etherscan": ^3.1.0
+    "@openzeppelin/contracts": ^4.7.3
+    "@trivago/prettier-plugin-sort-imports": ^3.3.0
+    "@typechain/ethers-v5": ^10.1.0
+    "@typechain/hardhat": ^6.1.2
+    "@types/chai": ^4.3.3
+    "@types/fs-extra": ^9.0.13
+    "@types/mocha": ^9.1.1
+    "@types/node": ^18.6.5
+    "@typescript-eslint/eslint-plugin": ^5.33.0
+    "@typescript-eslint/parser": ^5.33.0
+    chai: ^4.3.6
+    commitizen: ^4.2.5
+    cross-env: ^7.0.3
+    cz-conventional-changelog: ^3.3.0
+    dotenv: ^16.0.1
+    eslint: ^8.21.0
+    eslint-config-prettier: ^8.5.0
+    ethers: ^5.6.9
+    fs-extra: ^10.1.0
+    hardhat: ^2.10.1
+    hardhat-gas-reporter: ^1.0.8
+    husky: ^8.0.1
+    lint-staged: ^13.0.3
+    lodash: ^4.17.21
+    mocha: ^10.0.0
+    pinst: ^3.0.0
+    prettier: ^2.7.1
+    prettier-plugin-solidity: ^1.0.0-beta.24
+    shx: ^0.3.4
+    solhint: ^3.3.7
+    solhint-plugin-prettier: ^0.0.5
+    solidity-coverage: ^0.7.21
+    solmate: ^6.6.1
+    ts-generator: ^0.1.1
+    ts-node: ^10.9.1
+    typechain: ^8.1.0
+    typescript: ^4.7.4
+  languageName: unknown
+  linkType: soft
+
 "@babel/code-frame@npm:^7.0.0, @babel/code-frame@npm:^7.16.7, @babel/code-frame@npm:^7.18.6":
   version: 7.18.6
   resolution: "@babel/code-frame@npm:7.18.6"
@@ -1240,59 +1296,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@prb/hardhat-template@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "@prb/hardhat-template@workspace:."
-  dependencies:
-    "@commitlint/cli": ^17.0.3
-    "@commitlint/config-conventional": ^17.0.3
-    "@ethersproject/abi": ^5.6.4
-    "@ethersproject/abstract-signer": ^5.6.2
-    "@ethersproject/bignumber": ^5.6.2
-    "@ethersproject/bytes": ^5.6.1
-    "@ethersproject/providers": ^5.6.8
-    "@nomicfoundation/hardhat-chai-matchers": ^1.0.2
-    "@nomicfoundation/hardhat-network-helpers": ^1.0.3
-    "@nomicfoundation/hardhat-toolbox": ^1.0.2
-    "@nomiclabs/hardhat-ethers": ^2.1.0
-    "@nomiclabs/hardhat-etherscan": ^3.1.0
-    "@trivago/prettier-plugin-sort-imports": ^3.3.0
-    "@typechain/ethers-v5": ^10.1.0
-    "@typechain/hardhat": ^6.1.2
-    "@types/chai": ^4.3.3
-    "@types/fs-extra": ^9.0.13
-    "@types/mocha": ^9.1.1
-    "@types/node": ^18.6.5
-    "@typescript-eslint/eslint-plugin": ^5.33.0
-    "@typescript-eslint/parser": ^5.33.0
-    chai: ^4.3.6
-    commitizen: ^4.2.5
-    cross-env: ^7.0.3
-    cz-conventional-changelog: ^3.3.0
-    dotenv: ^16.0.1
-    eslint: ^8.21.0
-    eslint-config-prettier: ^8.5.0
-    ethers: ^5.6.9
-    fs-extra: ^10.1.0
-    hardhat: ^2.10.1
-    hardhat-gas-reporter: ^1.0.8
-    husky: ^8.0.1
-    lint-staged: ^13.0.3
-    lodash: ^4.17.21
-    mocha: ^10.0.0
-    pinst: ^3.0.0
-    prettier: ^2.7.1
-    prettier-plugin-solidity: ^1.0.0-beta.24
-    shx: ^0.3.4
-    solhint: ^3.3.7
-    solhint-plugin-prettier: ^0.0.5
-    solidity-coverage: ^0.7.21
-    ts-generator: ^0.1.1
-    ts-node: ^10.9.1
-    typechain: ^8.1.0
-    typescript: ^4.7.4
-  languageName: unknown
-  linkType: soft
+"@openzeppelin/contracts@npm:^4.7.3":
+  version: 4.7.3
+  resolution: "@openzeppelin/contracts@npm:4.7.3"
+  checksum: 18382fcacf7cfd652f5dd0e70c08f08ea74eaa8ff11e9f9850639ada70198ae01a3f9493d89a52d724f2db394e9616bf6258017804612ba273167cf657fbb073
+  languageName: node
+  linkType: hard
 
 "@scure/base@npm:~1.1.0":
   version: 1.1.1
@@ -9945,6 +9954,13 @@ __metadata:
   bin:
     solidity-coverage: plugins/bin.js
   checksum: a782a96bc2a1cb8120f3e401b09e7ba4b0a38e9198fc91b11c8dacac071f1142ecb2fc4c290675cf36ba80f52773065dd1a6225d0650dc8987a073072734984a
+  languageName: node
+  linkType: hard
+
+"solmate@npm:^6.6.1":
+  version: 6.6.1
+  resolution: "solmate@npm:6.6.1"
+  checksum: 8984eeabcc5e4b47bf37e3bc0c7fa9d358bf6cb0eb874be87572b841c9d61e8523be1e7221bdd36e87a84017ed5e08ca835728393e22ea5b7cd7be925904bf12
   languageName: node
   linkType: hard
 

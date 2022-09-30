@@ -16,9 +16,9 @@ Multiply Gobbler Vault **multiplies** your Gobblers.
 
 Gobbler's are inflationary. Holders will have to **actively** mint Gobblers using Goo else they will lose market share in an inflationary game.
 
-- **Artists**: Want to not be diluted but don't know the optimal strategy or cannot actively play. Deposit your Gobblers.
-- **6, 7, 8 multipliers**: Analysis shows that players who hold Gobblers with 9 multipliers will buy all the Gobblers in first 2 months (if MAX BIDDING), hattip [paco0x](https://twitter.com/paco0x). Want to participate in forst 2 months? Deposit your Gobbler.
-- **Gobbler sellers**: Want to sell your gobbler ASAP but don't know price it efficiently on Opensea? Deposit your Gobbler and sell `mGOB` on Uniswap (you will get the floor price)
+- **Artists**: Want to not be diluted but don't know the optimal strategy or cannot actively play. Deposit your Gobbler.
+- **6, 7, 8 multipliers**: Analysis shows that players who hold Gobblers with 9 multipliers will buy all the Gobblers in first 2 months (if MAX BIDDING), hattip [paco0x](https://twitter.com/paco0x). Want to participate in the first 2 months? Deposit your Gobbler.
+- **Gobbler sellers**: Want to sell your gobbler ASAP but don't know hoz to price it efficiently on Opensea? Deposit your Gobbler and sell `mGOB` on Uniswap (you will get the floor price)
 - **Gobbler buyers**: Want to buy a Gobbler but dont have enough Goo. Buy `mGOB` on Uniswap and withdraw a Gobbler.
 
 ## Usage

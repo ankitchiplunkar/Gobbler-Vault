@@ -1,7 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import chai from "chai";
 import { solidity } from "ethereum-waffle";
-import { Contract } from "ethers";
 import { ethers } from "hardhat";
 
 import { MockArtGobbler, MultiplyGobblerVault } from "../types/contracts";

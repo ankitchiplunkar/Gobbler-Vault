@@ -1,6 +1,5 @@
 # Multiply Gobbler Vault
 
-
 ## Usage
 
 ### Pre Requisites

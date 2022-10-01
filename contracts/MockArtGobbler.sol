@@ -7,6 +7,7 @@ import { ERC721 } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 contract MockArtGobbler is ERC721 {
     constructor() ERC721("Mock Art Gobbler", "MAG") {}
 
+    uint256 public nextIndexToMint = 0;
     mapping(address => uint256) public userEmissionMultiple;
     mapping(address => uint256) public userGooBalance;
 
@@ -35,7 +36,12 @@ contract MockArtGobbler is ERC721 {
         return 10**18;
     }
 
-    function mint(uint256 tokenId) external {
-        _mint(msg.sender, tokenId);
+    function mint() public {
+        _mint(msg.sender, nextIndexToMint);
+        nextIndexToMint++;
+    }
+
+    function mintFromGoo(uint256 maxPrice, bool useVirtualBalance) external returns (uint256 gobblerId) {
+        mint();
     }
 }

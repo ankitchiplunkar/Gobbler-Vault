@@ -2,8 +2,10 @@
 pragma solidity >=0.8.4;
 
 import { IArtGobbler } from "./IArtGobbler.sol";
+import { LibGOO } from "./LibGOO.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { ERC721TokenReceiver } from "solmate/src/tokens/ERC721.sol";
+import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 
 contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
     IArtGobbler public immutable artGobbler;
@@ -22,13 +24,25 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         return 10**18;
     }
 
+    // Calculates extra Goo produced by a Gobbler in time block.timestamp
+    function getGooDebt(uint256 multiplier) public view returns (uint256) {
+        return
+            LibGOO.computeGOOBalance(
+                artGobbler.getUserData(address(this)).emissionMultiple + multiplier,
+                artGobbler.getUserData(address(this)).lastBalance,
+                uint256(toDaysWadUnsafe(block.timestamp - artGobbler.getUserData(address(this)).lastTimestamp))
+            ) - artGobbler.gooBalance(address(this));
+    }
+
     // Deposit Gobbler into the vault and get mGOB tokens proportional to multiplier of the Gobbler
     // This requires an approve before the deposit
     function deposit(uint256 id) public {
+        // multiplier of to be deposited gobbler
+        uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         // transfer art gobbler into the vault
         artGobbler.safeTransferFrom(msg.sender, address(this), id);
-        // multiplier of deposited gobbler
-        uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
+        // transfer go debt into the vault
+        artGobbler.transferGooFrom(msg.sender, address(this), getGooDebt(multiplier));
         // mint the mGOB tokens to depositor
         _mint(msg.sender, multiplier * getConversionRate());
     }
@@ -50,7 +64,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
     }
 
     // Any address can call this function and mint a Gobbler
-    // Strategy should return Goo > GobblerPrice() for the transaction to suceed
+    // Strategy should return Goo > GobblerPrice() for the transaction to succeed
     function mintGobbler() public {
         artGobbler.mintFromGoo(gobblerStrategy(), true);
     }

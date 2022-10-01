@@ -21,7 +21,7 @@ describe("Multiply Gobbler tests", () => {
     const multiplyGobblerFactory = new MultiplyGobblerVault__factory(deployer);
     multiplyGobbler = await multiplyGobblerFactory.deploy(mockArtGobbler.address);
 
-    await mockArtGobbler.connect(deployer).mint(0);
+    await mockArtGobbler.connect(deployer).mint();
     await mockArtGobbler.connect(deployer).setApprovalForAll(multiplyGobbler.address, true);
   });
 
@@ -57,7 +57,7 @@ describe("Multiply Gobbler tests", () => {
     expect(await multiplyGobbler.totalSupply()).to.equal(balanceBefore);
     expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
     await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 10);
-    await mockArtGobbler.connect(deployer).mint(1);
+    await mockArtGobbler.connect(deployer).mint();
     await multiplyGobbler.connect(deployer).deposit(1);
     // due to change in conversion rate lesser tokens are transferred to user
     const balanceAfter = ethers.BigNumber.from("7500000000000000000");
@@ -95,6 +95,23 @@ describe("Multiply Gobbler tests", () => {
     const gooBalance = 10;
     await mockArtGobbler.setGooBalance(multiplyGobbler.address, gooBalance);
     expect(await multiplyGobbler.gobblerStrategy()).to.equal(gooBalance);
+  });
+
+  it("test MintFromGoo function", async () => {
+    await multiplyGobbler.connect(deployer).deposit(0);
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 10);
+    const balanceBefore = ethers.BigNumber.from("5000000000000000000");
+    expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(balanceBefore);
+    expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
+    await multiplyGobbler.connect(deployer).withdraw(0);
+    const balanceAfter = ethers.BigNumber.from("2500000000000000000");
+    expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(balanceAfter);
+    expect(await mockArtGobbler.ownerOf(0)).to.equal(deployer.address);
+    await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 5);
+    await multiplyGobbler.connect(deployer).withdraw(1);
+    expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(0);
+    expect(await mockArtGobbler.ownerOf(1)).to.equal(deployer.address);
   });
 
   // TODO: Test mintGobbler

@@ -39,6 +39,12 @@ interface IArtGobbler is IERC721 {
                         STATE-MODIFYING FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
+    function transferGooFrom(
+        address from,
+        address to,
+        uint256 gooAmount
+    ) external returns (bool);
+
     function mintFromGoo(uint256 maxPrice, bool useVirtualBalance) external returns (uint256 gobblerId);
 
     function mintLegendaryGobbler(uint256[] calldata gobblerIds) external returns (uint256 gobblerId);

@@ -1,3 +1,4 @@
+// https://github.com/transmissions11/goo-issuance/blob/648e65e66e43ff5c19681427e300ece9c0df1437/src/LibGOO.sol#L1
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
@@ -24,19 +25,17 @@ library LibGOO {
             uint256 timeElapsedSquaredWad = timeElapsedWad.mulWadDown(timeElapsedWad);
 
             // prettier-ignore
-            return lastBalanceWad + // The last recorded balance.
-
-            // Don't need to do wad multiplication since we're
-            // multiplying by a plain integer with no decimals.
-            // Shift right by 2 is equivalent to division by 4.
-            ((emissionMultiple * timeElapsedSquaredWad) >> 2) +
-
-            timeElapsedWad.mulWadDown( // Terms are wads, so must mulWad.
-                // No wad multiplication for emissionMultiple * lastBalance
-                // because emissionMultiple is a plain integer with no decimals.
-                // We multiply the sqrt's radicand by 1e18 because it expects ints.
-                (emissionMultiple * lastBalanceWad * 1e18).sqrt()
-            );
+            return lastBalanceWad // The last recorded balance.
+                // Don't need to do wad multiplication since we're
+                // multiplying by a plain integer with no decimals.
+                // Shift right by 2 is equivalent to division by 4.
+                + ((emissionMultiple * timeElapsedSquaredWad) >> 2)
+                + timeElapsedWad.mulWadDown( // Terms are wads, so must mulWad.
+                    // No wad multiplication for emissionMultiple * lastBalance
+                    // because emissionMultiple is a plain integer with no decimals.
+                    // We multiply the sqrt's radicand by 1e18 because it expects ints.
+                    (emissionMultiple * lastBalanceWad * 1e18).sqrt()
+                );
         }
     }
 }

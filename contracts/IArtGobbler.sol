@@ -7,6 +7,20 @@ interface IArtGobbler is IERC721 {
     /*//////////////////////////////////////////////////////////////
                                 VIEW FUNCTIONS
     //////////////////////////////////////////////////////////////*/
+    /// @notice Struct holding data relevant to each user's account.
+    struct UserData {
+        // The total number of gobblers currently owned by the user.
+        uint32 gobblersOwned;
+        // The sum of the multiples of all gobblers the user holds.
+        uint32 emissionMultiple;
+        // User's goo balance at time of last checkpointing.
+        uint128 lastBalance;
+        // Timestamp of the last goo balance checkpoint.
+        uint64 lastTimestamp;
+    }
+
+    function getUserData(address user) external view returns (UserData calldata);
+
     function transferGooFrom(
         address from,
         address to,

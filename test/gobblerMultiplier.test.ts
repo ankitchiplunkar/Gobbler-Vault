@@ -3,8 +3,8 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { ethers } from "hardhat";
 
-import { MockArtGobbler, MultiplyGobblerVault } from "../types/contracts";
-import { MockArtGobbler__factory, MultiplyGobblerVault__factory } from "../types/factories/contracts";
+import { MockArtGobbler, MultiplyGobblerVault, LibGOO } from "../types/contracts";
+import { MockArtGobbler__factory, MultiplyGobblerVault__factory, LibGOO__factory } from "../types/factories/contracts";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -12,14 +12,22 @@ const { expect } = chai;
 describe("Multiply Gobbler tests", () => {
   let mockArtGobbler: MockArtGobbler;
   let multiplyGobbler: MultiplyGobblerVault;
+  let libGoo: LibGOO;
   let deployer: SignerWithAddress;
 
   beforeEach("deploy contracts", async () => {
     [deployer] = await ethers.getSigners();
     const mockFactory = new MockArtGobbler__factory(deployer);
     mockArtGobbler = await mockFactory.deploy();
-    const multiplyGobblerFactory = new MultiplyGobblerVault__factory(deployer);
+    const libGOOFactory = new LibGOO__factory(deployer);
+    libGoo = await libGOOFactory.deploy();
+    const multiplyGobblerFactory = <MultiplyGobblerVault__factory>await ethers.getContractFactory("MultiplyGobblerVault", {
+      libraries: {
+        "LibGOO": libGoo.address,
+      }
+    })
     multiplyGobbler = await multiplyGobblerFactory.deploy(mockArtGobbler.address);
+    console.log(multiplyGobbler.address)
 
     await mockArtGobbler.connect(deployer).mint();
     await mockArtGobbler.connect(deployer).setApprovalForAll(multiplyGobbler.address, true);

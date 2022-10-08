@@ -44,4 +44,12 @@ contract MockArtGobbler is ERC721 {
     function mintFromGoo(uint256 maxPrice, bool useVirtualBalance) external returns (uint256 gobblerId) {
         mint();
     }
+
+    function transferGooFrom(
+        address from,
+        address to,
+        uint256 gooAmount
+    ) external returns (bool) {
+        return true;
+    }
 }

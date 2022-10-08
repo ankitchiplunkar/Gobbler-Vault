@@ -64,8 +64,11 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         // transfer art gobbler into the vault
         artGobbler.safeTransferFrom(msg.sender, address(this), id);
         // transfer go debt into the vault
-        bool success = artGobbler.transferGooFrom(msg.sender, address(this), getGooDeposit(multiplier));
-        if (!success) revert GooDepositFailed();
+        uint256 gooDeposit = getGooDeposit(multiplier);
+        if (gooDeposit > 0) {
+            bool success = artGobbler.transferGooFrom(msg.sender, address(this), gooDeposit);
+            if (!success) revert GooDepositFailed();
+        }
         // mint the mGOB tokens to depositor
         // TODO: implement deposit tax
         _mint(msg.sender, multiplier * getConversionRate());

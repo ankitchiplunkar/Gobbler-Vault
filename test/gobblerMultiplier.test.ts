@@ -3,8 +3,8 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { ethers } from "hardhat";
 
-import { MockArtGobbler, MultiplyGobblerVault } from "../types/contracts";
-import { MockArtGobbler__factory, MultiplyGobblerVault__factory } from "../types/factories/contracts";
+import { LibGOO, MockArtGobbler, MultiplyGobblerVault } from "../types/contracts";
+import { LibGOO__factory, MockArtGobbler__factory, MultiplyGobblerVault__factory } from "../types/factories/contracts";
 
 chai.use(solidity);
 const { expect } = chai;
@@ -12,21 +12,21 @@ const { expect } = chai;
 describe("Multiply Gobbler tests", () => {
   let mockArtGobbler: MockArtGobbler;
   let multiplyGobbler: MultiplyGobblerVault;
-  // let libGoo: LibGOO;
+  let libGoo: LibGOO;
   let deployer: SignerWithAddress;
 
   beforeEach("deploy contracts", async () => {
     [deployer] = await ethers.getSigners();
     const mockFactory = new MockArtGobbler__factory(deployer);
     mockArtGobbler = await mockFactory.deploy();
-    // const libGOOFactory = new LibGOO__factory(deployer);
-    // libGoo = await libGOOFactory.deploy();
+    const libGOOFactory = new LibGOO__factory(deployer);
+    libGoo = await libGOOFactory.deploy();
     const multiplyGobblerFactory = <MultiplyGobblerVault__factory>await ethers.getContractFactory(
       "MultiplyGobblerVault",
       {
-        // libraries: {
-        //  "LibGOO": libGoo.address,
-        // }
+        libraries: {
+          LibGOO: libGoo.address,
+        },
       },
     );
     multiplyGobbler = await multiplyGobblerFactory.deploy(mockArtGobbler.address);
@@ -109,7 +109,9 @@ describe("Multiply Gobbler tests", () => {
 
   it("test MintFromGoo function", async () => {
     await multiplyGobbler.connect(deployer).deposit(0);
+    expect(await multiplyGobbler.totalMinted()).to.equal(0);
     await multiplyGobbler.connect(deployer).mintGobbler();
+    expect(await multiplyGobbler.totalMinted()).to.equal(1);
     await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 10);
     const balanceBefore = ethers.BigNumber.from("5000000000000000000");
     expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(balanceBefore);
@@ -124,6 +126,5 @@ describe("Multiply Gobbler tests", () => {
     expect(await mockArtGobbler.ownerOf(1)).to.equal(deployer.address);
   });
 
-  // TODO: Test mintGobbler
   // TODO: Test mintLegendaryGobbler
 });

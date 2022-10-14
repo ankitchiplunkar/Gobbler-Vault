@@ -13,12 +13,13 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
     uint256 public lastMintGooBalance;
     uint256 public lastMintTimestamp;
     uint256 public totalMinted = 0;
+    uint256 public totalLaggedMultiple = 0;
     mapping(address => mapping(uint256 => uint256)) public laggingDeposit;
 
     // TODO: add error messages
     error GooDepositFailed();
     error TotalMintedIsZero();
-    error TotalMintedIsTooLow();
+    error ClaimingInLowerMintWindow();
 
     // TODO: add events
 
@@ -34,7 +35,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
     function getConversionRate() public view returns (uint256) {
         if (totalSupply > 0) {
             uint256 vaultMultiple = artGobbler.getUserEmissionMultiple(address(this));
-            return totalSupply / vaultMultiple;
+            return totalSupply / (vaultMultiple - totalLaggedMultiple);
         }
         return 10**18;
     }
@@ -104,6 +105,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         artGobbler.safeTransferFrom(msg.sender, address(this), id);
         // update the laggingDeposit variable
         laggingDeposit[msg.sender][totalMinted] += multiplier;
+        totalLaggedMultiple += multiplier;
     }
 
     // enables withdraw lagged deposits
@@ -113,6 +115,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         // burn the mGOB tokens to depositor
         laggingDeposit[msg.sender][totalMinted] -= multiplier;
+        totalLaggedMultiple -= multiplier;
         // transfer art gobbler to the withdrawer
         artGobbler.transferFrom(address(this), msg.sender, id);
     }
@@ -122,9 +125,10 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         uint256 conversionRate = getConversionRate(); // caching for gas
         for (uint256 i = 0; i < whenMinted.length; i++) {
             // cannot claim deposit if the next token has not been minted
-            if (totalMinted < whenMinted[i]) revert TotalMintedIsTooLow();
+            if (totalMinted <= whenMinted[i]) revert ClaimingInLowerMintWindow();
             uint256 oldDeposit = laggingDeposit[msg.sender][whenMinted[i]];
             laggingDeposit[msg.sender][whenMinted[i]] = 0;
+            totalLaggedMultiple -= oldDeposit;
             _mint(msg.sender, oldDeposit * conversionRate);
         }
     }

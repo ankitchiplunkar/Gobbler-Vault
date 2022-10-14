@@ -204,7 +204,10 @@ describe("Multiply Gobbler tests", () => {
       await multiplyGobbler.connect(deployer).mintGobbler();
       await multiplyGobbler.connect(deployer).depositWithLag(0);
       expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5);
-      await expect(multiplyGobbler.connect(deployer).claimLagged([1])).to.be.revertedWithCustomError(multiplyGobbler, "ClaimingInLowerMintWindow");
+      await expect(multiplyGobbler.connect(deployer).claimLagged([1])).to.be.revertedWithCustomError(
+        multiplyGobbler,
+        "ClaimingInLowerMintWindow",
+      );
       expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5);
       expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
     });
@@ -227,6 +230,39 @@ describe("Multiply Gobbler tests", () => {
       expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(0);
       expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
       expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(625).div(100));
+    });
+
+    it("getConversionRate when totalLaggedMultiple > 0", async () => {
+      await multiplyGobbler.connect(deployer).deposit(0);
+      await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 5);
+      expect(await multiplyGobbler.getConversionRate()).to.equal(wad);
+
+      // when multiplier and totalLaggedMultiple increases due to depositWithLag, conversion rate remains the same
+      await multiplyGobbler.connect(deployer).mintGobbler();
+      await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 10);
+      expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(2));
+      await mockArtGobbler.connect(deployer).mint();
+      await multiplyGobbler.connect(deployer).depositWithLag(2);
+      await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 15);
+      expect(await multiplyGobbler.totalLaggedMultiple()).to.equal(5);
+      expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(2));
+
+      // when user withdraws supply conversion rate remains the same
+      await multiplyGobbler.connect(deployer).withdrawLagged(0);
+      await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 10);
+      expect(await multiplyGobbler.totalLaggedMultiple()).to.equal(0);
+      expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(2));
+
+      // when user claims tokens after mint
+      await multiplyGobbler.connect(deployer).depositWithLag(0);
+      await multiplyGobbler.connect(deployer).mintGobbler();
+      await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 20);
+      expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(3));
+      const totalMinted = await multiplyGobbler.totalMinted();
+      await multiplyGobbler.claimLagged([totalMinted.sub(1)]);
+      expect(await multiplyGobbler.balanceOf(deployer.address)).to.be.closeTo(wad.mul(20).div(3), 10);
+      expect(await multiplyGobbler.totalLaggedMultiple()).to.equal(0);
+      expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(3));
     });
   });
 

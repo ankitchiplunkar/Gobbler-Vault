@@ -180,14 +180,14 @@ describe("Multiply Gobbler tests", () => {
     it("deposit with lag", async () => {
       await multiplyGobbler.connect(deployer).mintGobbler();
       await multiplyGobbler.connect(deployer).depositWithLag(0);
-      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5*precision);
+      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5 * precision);
       expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
     });
 
     it("withdraw lagged in same mint window", async () => {
       await multiplyGobbler.connect(deployer).mintGobbler();
       await multiplyGobbler.connect(deployer).depositWithLag(0);
-      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5*precision);
+      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5 * precision);
       await multiplyGobbler.connect(deployer).withdrawLagged(0);
       expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(0);
       expect(await mockArtGobbler.ownerOf(0)).to.equal(deployer.address);
@@ -197,7 +197,7 @@ describe("Multiply Gobbler tests", () => {
     it("cannot withdraw lagged after a mint", async () => {
       await multiplyGobbler.connect(deployer).mintGobbler();
       await multiplyGobbler.connect(deployer).depositWithLag(0);
-      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5*precision);
+      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5 * precision);
       await multiplyGobbler.connect(deployer).mintGobbler();
       await expect(multiplyGobbler.connect(deployer).withdrawLagged(0)).to.be.reverted;
     });
@@ -205,12 +205,12 @@ describe("Multiply Gobbler tests", () => {
     it("cannot claim lagged in same mint window", async () => {
       await multiplyGobbler.connect(deployer).mintGobbler();
       await multiplyGobbler.connect(deployer).depositWithLag(0);
-      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5*precision);
+      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5 * precision);
       await expect(multiplyGobbler.connect(deployer).claimLagged([1])).to.be.revertedWithCustomError(
         multiplyGobbler,
         "ClaimingInLowerMintWindow",
       );
-      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5*precision);
+      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5 * precision);
       expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
     });
 
@@ -220,7 +220,7 @@ describe("Multiply Gobbler tests", () => {
       expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
       await mockArtGobbler.connect(deployer).mint();
       await multiplyGobbler.connect(deployer).depositWithLag(2);
-      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5*precision);
+      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5 * precision);
       // 2 more mints have happened
       await multiplyGobbler.connect(deployer).mintGobbler();
       await multiplyGobbler.connect(deployer).mintGobbler();
@@ -246,7 +246,7 @@ describe("Multiply Gobbler tests", () => {
       await mockArtGobbler.connect(deployer).mint();
       await multiplyGobbler.connect(deployer).depositWithLag(2);
       await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 15);
-      expect(await multiplyGobbler.totalLaggedMultiple()).to.equal(5*precision);
+      expect(await multiplyGobbler.totalLaggedMultiple()).to.equal(5 * precision);
       expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(2));
 
       // when user withdraws supply conversion rate remains the same

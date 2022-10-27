@@ -35,7 +35,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
     function getConversionRate() public view returns (uint256) {
         if (totalSupply > 0) {
             uint256 vaultMultiple = artGobbler.getUserEmissionMultiple(address(this));
-            return totalSupply / (vaultMultiple - totalLaggedMultiple/PRECISION);
+            return totalSupply / (vaultMultiple - totalLaggedMultiple / PRECISION);
         }
         return 10**18;
     }
@@ -103,8 +103,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         // transfer art gobbler into the vault
         artGobbler.safeTransferFrom(msg.sender, address(this), id);
-        laggingDeposit[msg.sender][totalMinted] += multiplier*PRECISION;
-        totalLaggedMultiple += multiplier*PRECISION;
+        laggingDeposit[msg.sender][totalMinted] += multiplier * PRECISION;
+        totalLaggedMultiple += multiplier * PRECISION;
     }
 
     // enables withdraw lagged deposits
@@ -113,8 +113,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         // multiplier of to be withdrawn gobbler
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         // burn the mGOB tokens to depositor
-        laggingDeposit[msg.sender][totalMinted] -= multiplier*PRECISION;
-        totalLaggedMultiple -= multiplier*PRECISION;
+        laggingDeposit[msg.sender][totalMinted] -= multiplier * PRECISION;
+        totalLaggedMultiple -= multiplier * PRECISION;
         // transfer art gobbler to the withdrawer
         artGobbler.safeTransferFrom(address(this), msg.sender, id);
     }
@@ -128,7 +128,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
             uint256 oldDeposit = laggingDeposit[msg.sender][whenMinted[i]];
             laggingDeposit[msg.sender][whenMinted[i]] = 0;
             totalLaggedMultiple -= oldDeposit;
-            _mint(msg.sender, oldDeposit/PRECISION * conversionRate);
+            _mint(msg.sender, (oldDeposit / PRECISION) * conversionRate);
         }
     }
 

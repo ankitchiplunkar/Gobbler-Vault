@@ -14,6 +14,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
     uint256 public lastMintTimestamp;
     uint256 public totalMinted = 0;
     uint256 public totalLaggedMultiple = 0;
+    uint256 public constant PRECISION = 1e6;
+    uint256 public constant TAX_RATE = 5000;
     mapping(address => mapping(uint256 => uint256)) public laggingDeposit;
 
     // TODO: add error messages
@@ -27,15 +29,13 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         artGobbler = IArtGobbler(_artGobbler);
     }
 
-    // TODO: add a view function to calculate APR
-
     // View functions
     // Vault will keep on buying more Gobblers
     // this means that the conversion rate cannot remain 10**18
     function getConversionRate() public view returns (uint256) {
         if (totalSupply > 0) {
             uint256 vaultMultiple = artGobbler.getUserEmissionMultiple(address(this));
-            return totalSupply / (vaultMultiple - totalLaggedMultiple);
+            return totalSupply / (vaultMultiple - totalLaggedMultiple/PRECISION);
         }
         return 10**18;
     }
@@ -93,7 +93,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         // burn the mGOB tokens to depositor
         _burn(msg.sender, multiplier * getConversionRate());
         // transfer art gobbler to the withdrawer
-        artGobbler.transferFrom(address(this), msg.sender, id);
+        artGobbler.safeTransferFrom(address(this), msg.sender, id);
     }
 
     // enables depositing inbetween mints without submitting goo
@@ -103,9 +103,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         // transfer art gobbler into the vault
         artGobbler.safeTransferFrom(msg.sender, address(this), id);
-        // update the laggingDeposit variable
-        laggingDeposit[msg.sender][totalMinted] += multiplier;
-        totalLaggedMultiple += multiplier;
+        laggingDeposit[msg.sender][totalMinted] += multiplier*PRECISION;
+        totalLaggedMultiple += multiplier*PRECISION;
     }
 
     // enables withdraw lagged deposits
@@ -114,10 +113,10 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         // multiplier of to be withdrawn gobbler
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         // burn the mGOB tokens to depositor
-        laggingDeposit[msg.sender][totalMinted] -= multiplier;
-        totalLaggedMultiple -= multiplier;
+        laggingDeposit[msg.sender][totalMinted] -= multiplier*PRECISION;
+        totalLaggedMultiple -= multiplier*PRECISION;
         // transfer art gobbler to the withdrawer
-        artGobbler.transferFrom(address(this), msg.sender, id);
+        artGobbler.safeTransferFrom(address(this), msg.sender, id);
     }
 
     // enables claiming mGOB tokens after the next mint
@@ -129,7 +128,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
             uint256 oldDeposit = laggingDeposit[msg.sender][whenMinted[i]];
             laggingDeposit[msg.sender][whenMinted[i]] = 0;
             totalLaggedMultiple -= oldDeposit;
-            _mint(msg.sender, oldDeposit * conversionRate);
+            _mint(msg.sender, oldDeposit/PRECISION * conversionRate);
         }
     }
 
@@ -148,6 +147,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
 
     // Any address can call this function and mint a Legendary Gobbler
     // If there are enough virtual Goo in then the vault can mint a Gobbler
+    // TODO: add reentrancy guard here
     function mintLegendaryGobbler(uint256[] calldata gobblerIds) public {
         artGobbler.mintLegendaryGobbler(gobblerIds);
     }

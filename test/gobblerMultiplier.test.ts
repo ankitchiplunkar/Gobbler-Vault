@@ -15,11 +15,12 @@ describe("Multiply Gobbler tests", () => {
   let multiplyGobbler: MultiplyGobblerVault;
   let libGoo: LibGOO;
   let deployer: SignerWithAddress;
+  let john: SignerWithAddress;
   let wad: BigNumber;
   let precision: number;
 
   beforeEach("deploy contracts", async () => {
-    [deployer] = await ethers.getSigners();
+    [deployer, john] = await ethers.getSigners();
     wad = ethers.BigNumber.from("1000000000000000000");
     precision = 1000000;
     const mockFactory = new MockArtGobbler__factory(deployer);
@@ -38,6 +39,7 @@ describe("Multiply Gobbler tests", () => {
 
     await mockArtGobbler.connect(deployer).mint();
     await mockArtGobbler.connect(deployer).setApprovalForAll(multiplyGobbler.address, true);
+    await mockArtGobbler.connect(john).setApprovalForAll(multiplyGobbler.address, true);
   });
 
   // Testing view functions
@@ -85,6 +87,10 @@ describe("Multiply Gobbler tests", () => {
     const gooBalance = 10;
     await mockArtGobbler.setGooBalance(multiplyGobbler.address, gooBalance);
     expect(await multiplyGobbler.gobblerStrategy()).to.equal(gooBalance);
+  });
+
+  it("checks owner", async () => {
+    expect(await multiplyGobbler.owner()).to.equal(deployer.address);
   });
 
   // Testing state changing functions
@@ -165,6 +171,23 @@ describe("Multiply Gobbler tests", () => {
     expect(await multiplyGobbler.getGooDeposit(5)).to.gt(0);
     await multiplyGobbler.connect(deployer).deposit(0);
     expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
+    expect(await multiplyGobbler.totalSupply()).to.equal(wad.mul(5));
+    expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
+  });
+
+  it.only("deposit when depositTax is non-zero", async () => {
+    // minting 3 tokens to trigger deposit tax
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    expect(await multiplyGobbler.totalSupply()).to.equal(0);
+    expect(await multiplyGobbler.totalMinted()).to.equal(3);
+    // transferring tokens to non-owner to check post tax balances
+    await mockArtGobbler.connect(deployer).transferFrom(deployer.address, john.address, 0);
+    await multiplyGobbler.connect(john).deposit(0);
+    // verifying final balances
+    expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5).mul(5).div(1000));
+    expect(await multiplyGobbler.balanceOf(john.address)).to.equal(wad.mul(5).mul(995).div(1000));
     expect(await multiplyGobbler.totalSupply()).to.equal(wad.mul(5));
     expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
   });
@@ -266,6 +289,8 @@ describe("Multiply Gobbler tests", () => {
       expect(await multiplyGobbler.totalLaggedMultiple()).to.equal(0);
       expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(3));
     });
+
+    // TODO add tests for claim, withdraw and deposit after tax starts
   });
 
   // TODO: Test mintLegendaryGobbler

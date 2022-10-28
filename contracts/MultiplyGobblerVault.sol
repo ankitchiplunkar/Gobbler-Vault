@@ -4,10 +4,11 @@ pragma solidity >=0.8.4;
 import { IArtGobbler } from "./IArtGobbler.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { ERC721TokenReceiver } from "solmate/src/tokens/ERC721.sol";
+import { Owned } from "solmate/src/auth/Owned.sol";
 import { LibGOO } from "./LibGOO.sol";
 import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 
-contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
+contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     IArtGobbler public immutable artGobbler;
     uint256 public lastMintEmissionMultiple;
     uint256 public lastMintGooBalance;
@@ -16,6 +17,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
     uint256 public totalLaggedMultiple = 0;
     uint256 public constant PRECISION = 1e6;
     uint256 public constant TAX_RATE = 5000;
+    uint256 public constant DEPOSIT_TAX_START_AFTER = 2;
     mapping(address => mapping(uint256 => uint256)) public laggingDeposit;
 
     // TODO: add error messages
@@ -25,7 +27,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
 
     // TODO: add events
 
-    constructor(address _artGobbler) ERC20("Multiply Gobbler", "mGOB", 18) {
+    constructor(address _artGobbler) ERC20("Multiply Gobbler", "mGOB", 18) Owned(msg.sender) {
         artGobbler = IArtGobbler(_artGobbler);
     }
 
@@ -82,8 +84,14 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
             if (!success) revert GooDepositFailed();
         }
         // mint the mGOB tokens to depositor
-        // TODO: implement deposit tax
-        _mint(msg.sender, multiplier * getConversionRate());
+        uint256 conversionRate = getConversionRate();
+        if (totalMinted > DEPOSIT_TAX_START_AFTER) {
+            uint256 depositTax = (multiplier * conversionRate * TAX_RATE) / PRECISION;
+            _mint(owner, depositTax);
+            _mint(msg.sender, multiplier * conversionRate - depositTax);
+        } else {
+            _mint(msg.sender, multiplier * conversionRate);
+        }
     }
 
     // Withdraw a Gobbler from the vault
@@ -103,8 +111,13 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver {
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         // transfer art gobbler into the vault
         artGobbler.safeTransferFrom(msg.sender, address(this), id);
-        laggingDeposit[msg.sender][totalMinted] += multiplier * PRECISION;
-        totalLaggedMultiple += multiplier * PRECISION;
+        if (totalMinted > DEPOSIT_TAX_START_AFTER) {
+            uint256 depositTax = multiplier * TAX_RATE;
+            laggingDeposit[owner][totalMinted] += depositTax;
+            laggingDeposit[msg.sender][totalMinted] += multiplier * PRECISION - depositTax;
+        } else {
+            laggingDeposit[msg.sender][totalMinted] += multiplier * PRECISION;
+        }
     }
 
     // enables withdraw lagged deposits

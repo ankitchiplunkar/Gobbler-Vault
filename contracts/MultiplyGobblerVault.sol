@@ -21,6 +21,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     mapping(address => mapping(uint256 => uint256)) public laggingDeposit;
 
     // TODO: add error messages
+    // TODO: add code comments in correct format
     error GooDepositFailed();
     error TotalMintedIsZero();
     error ClaimingInLowerMintWindow();
@@ -37,7 +38,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     function getConversionRate() public view returns (uint256) {
         if (totalSupply > 0) {
             uint256 vaultMultiple = artGobbler.getUserEmissionMultiple(address(this));
-            return totalSupply / (vaultMultiple - totalLaggedMultiple / PRECISION);
+            return totalSupply / (vaultMultiple - totalLaggedMultiple);
         }
         return 10**18;
     }
@@ -69,6 +70,21 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
         return artGobbler.gooBalance(address(this));
     }
 
+    function _manageMgobMint(
+        uint256 multplierToMint,
+        uint256 conversionRate,
+        address receiver
+    ) internal {
+        // mint the mGOB tokens to depositor
+        if (totalMinted > DEPOSIT_TAX_START_AFTER) {
+            uint256 depositTax = (multplierToMint * conversionRate * TAX_RATE) / PRECISION;
+            _mint(owner, depositTax);
+            _mint(receiver, multplierToMint * conversionRate - depositTax);
+        } else {
+            _mint(receiver, multplierToMint * conversionRate);
+        }
+    }
+
     // State changing functions
     // Deposit Gobbler into the vault and get mGOB tokens proportional to multiplier of the Gobbler
     // This requires an approve before the deposit
@@ -83,15 +99,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
             bool success = artGobbler.transferGooFrom(msg.sender, address(this), gooDeposit);
             if (!success) revert GooDepositFailed();
         }
-        // mint the mGOB tokens to depositor
-        uint256 conversionRate = getConversionRate();
-        if (totalMinted > DEPOSIT_TAX_START_AFTER) {
-            uint256 depositTax = (multiplier * conversionRate * TAX_RATE) / PRECISION;
-            _mint(owner, depositTax);
-            _mint(msg.sender, multiplier * conversionRate - depositTax);
-        } else {
-            _mint(msg.sender, multiplier * conversionRate);
-        }
+        _manageMgobMint(multiplier, getConversionRate(), msg.sender);
     }
 
     // Withdraw a Gobbler from the vault
@@ -111,13 +119,9 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         // transfer art gobbler into the vault
         artGobbler.safeTransferFrom(msg.sender, address(this), id);
-        if (totalMinted > DEPOSIT_TAX_START_AFTER) {
-            uint256 depositTax = multiplier * TAX_RATE;
-            laggingDeposit[owner][totalMinted] += depositTax;
-            laggingDeposit[msg.sender][totalMinted] += multiplier * PRECISION - depositTax;
-        } else {
-            laggingDeposit[msg.sender][totalMinted] += multiplier * PRECISION;
-        }
+        // update users laggingDeposit amounts
+        laggingDeposit[msg.sender][totalMinted] += multiplier;
+        totalLaggedMultiple += multiplier;
     }
 
     // enables withdraw lagged deposits
@@ -125,23 +129,22 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     function withdrawLagged(uint256 id) public {
         // multiplier of to be withdrawn gobbler
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
-        // burn the mGOB tokens to depositor
-        laggingDeposit[msg.sender][totalMinted] -= multiplier * PRECISION;
-        totalLaggedMultiple -= multiplier * PRECISION;
+        // update users laggingDeposit amounts
+        laggingDeposit[msg.sender][totalMinted] -= multiplier;
+        totalLaggedMultiple -= multiplier;
         // transfer art gobbler to the withdrawer
         artGobbler.safeTransferFrom(address(this), msg.sender, id);
     }
 
     // enables claiming mGOB tokens after the next mint
     function claimLagged(uint256[] calldata whenMinted) public {
-        uint256 conversionRate = getConversionRate(); // caching for gas
         for (uint256 i = 0; i < whenMinted.length; i++) {
             // cannot claim deposit if the next token has not been minted
             if (totalMinted <= whenMinted[i]) revert ClaimingInLowerMintWindow();
-            uint256 oldDeposit = laggingDeposit[msg.sender][whenMinted[i]];
+            uint256 sendersLaggedDeposit = laggingDeposit[msg.sender][whenMinted[i]];
+            _manageMgobMint(sendersLaggedDeposit, getConversionRate(), msg.sender);
             laggingDeposit[msg.sender][whenMinted[i]] = 0;
-            totalLaggedMultiple -= oldDeposit;
-            _mint(msg.sender, (oldDeposit / PRECISION) * conversionRate);
+            totalLaggedMultiple -= sendersLaggedDeposit;
         }
     }
 

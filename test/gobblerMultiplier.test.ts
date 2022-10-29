@@ -315,8 +315,6 @@ describe("Multiply Gobbler tests", () => {
       expect(await multiplyGobbler.totalLaggedMultiple()).to.equal(0);
       expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(3));
     });
-
-    // TODO add tests for claim, withdraw and deposit after tax starts
   });
 
   // TODO: Test mintLegendaryGobbler

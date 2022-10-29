@@ -15,10 +15,11 @@ describe("Multiply Gobbler tests", () => {
   let multiplyGobbler: MultiplyGobblerVault;
   let libGoo: LibGOO;
   let deployer: SignerWithAddress;
+  let john: SignerWithAddress;
   let wad: BigNumber;
 
   beforeEach("deploy contracts", async () => {
-    [deployer] = await ethers.getSigners();
+    [deployer, john] = await ethers.getSigners();
     wad = ethers.BigNumber.from("1000000000000000000");
     const mockFactory = new MockArtGobbler__factory(deployer);
     mockArtGobbler = await mockFactory.deploy();
@@ -36,6 +37,7 @@ describe("Multiply Gobbler tests", () => {
 
     await mockArtGobbler.connect(deployer).mint();
     await mockArtGobbler.connect(deployer).setApprovalForAll(multiplyGobbler.address, true);
+    await mockArtGobbler.connect(john).setApprovalForAll(multiplyGobbler.address, true);
   });
 
   // Testing view functions
@@ -76,13 +78,17 @@ describe("Multiply Gobbler tests", () => {
     await ethers.provider.send("evm_mine", []);
     initialGoo = await libGoo.computeGOOBalance(10, 0, wad.mul(60).div(86400));
     finalGoo = await libGoo.computeGOOBalance(15, 0, wad.mul(60).div(86400));
-    expect(await multiplyGobbler.getGooDeposit(5)).to.equal(finalGoo.sub(initialGoo));
+    expect(await multiplyGobbler.getGooDeposit(5)).to.closeTo(finalGoo.sub(initialGoo), 25261327590);
   });
 
   it("gobbler strategy", async () => {
     const gooBalance = 10;
     await mockArtGobbler.setGooBalance(multiplyGobbler.address, gooBalance);
     expect(await multiplyGobbler.gobblerStrategy()).to.equal(gooBalance);
+  });
+
+  it("checks owner", async () => {
+    expect(await multiplyGobbler.owner()).to.equal(deployer.address);
   });
 
   // Testing state changing functions
@@ -167,6 +173,23 @@ describe("Multiply Gobbler tests", () => {
     expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
   });
 
+  it("deposit when depositTax is non-zero", async () => {
+    // minting 3 tokens to trigger deposit tax
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    expect(await multiplyGobbler.totalSupply()).to.equal(0);
+    expect(await multiplyGobbler.totalMinted()).to.equal(3);
+    // transferring tokens to non-owner to check post tax balances
+    await mockArtGobbler.connect(deployer).transferFrom(deployer.address, john.address, 0);
+    await multiplyGobbler.connect(john).deposit(0);
+    // verifying final balances
+    expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5).mul(5).div(1000));
+    expect(await multiplyGobbler.balanceOf(john.address)).to.equal(wad.mul(5).mul(995).div(1000));
+    expect(await multiplyGobbler.totalSupply()).to.equal(wad.mul(5));
+    expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
+  });
+
   describe("Test deposit with lag", async () => {
     it("reverts deposit with lag if total minted is zero", async () => {
       await expect(multiplyGobbler.connect(deployer).depositWithLag(0)).to.be.revertedWithCustomError(
@@ -219,17 +242,45 @@ describe("Multiply Gobbler tests", () => {
       await mockArtGobbler.connect(deployer).mint();
       await multiplyGobbler.connect(deployer).depositWithLag(2);
       expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5);
-      // 2 more mints have happened
+      // 1 more mint happened
+      // the user can claim tokens now
+      await multiplyGobbler.connect(deployer).mintGobbler();
+      // assuming 5 multiplier per mint/deposit
+      await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 20);
+      // conversion rate is 5/15
+      expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(3));
+      await multiplyGobbler.connect(deployer).claimLagged([1]);
+      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(0);
+      expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
+      expect(await mockArtGobbler.ownerOf(2)).to.equal(multiplyGobbler.address);
+      expect(await multiplyGobbler.balanceOf(deployer.address)).to.closeTo(wad.mul(5).add(wad.mul(5).div(3)), 10);
+    });
+
+    it("can claim lagged in seperate mint window after deposit tax", async () => {
+      await multiplyGobbler.connect(deployer).mintGobbler();
+      await multiplyGobbler.connect(deployer).deposit(0);
+      expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
+      await mockArtGobbler.connect(john).mint();
+      await multiplyGobbler.connect(john).depositWithLag(2);
+      expect(await multiplyGobbler.laggingDeposit(john.address, 1)).to.equal(5);
+      // 2 more mints happened
+      // the user can claim tokens now
       await multiplyGobbler.connect(deployer).mintGobbler();
       await multiplyGobbler.connect(deployer).mintGobbler();
+      // total Minted is greater than 2 deposit tax will activate
+      expect(await multiplyGobbler.totalMinted()).to.be.gt(2);
       // assuming 5 multiplier per mint/deposit
       await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 25);
       // conversion rate is 5/20
       expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(4));
-      await multiplyGobbler.connect(deployer).claimLagged([1]);
-      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(0);
+      await multiplyGobbler.connect(john).claimLagged([1]);
+      expect(await multiplyGobbler.laggingDeposit(john.address, 1)).to.equal(0);
       expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
-      expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(625).div(100));
+      expect(await mockArtGobbler.ownerOf(2)).to.equal(multiplyGobbler.address);
+      expect(await multiplyGobbler.balanceOf(john.address)).to.equal(wad.mul(5).div(4).mul(995).div(1000));
+      expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(
+        wad.mul(5).add(wad.mul(5).div(4).mul(5).div(1000)),
+      );
     });
 
     it("getConversionRate when totalLaggedMultiple > 0", async () => {

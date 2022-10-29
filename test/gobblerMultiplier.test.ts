@@ -78,7 +78,7 @@ describe("Multiply Gobbler tests", () => {
     await ethers.provider.send("evm_mine", []);
     initialGoo = await libGoo.computeGOOBalance(10, 0, wad.mul(60).div(86400));
     finalGoo = await libGoo.computeGOOBalance(15, 0, wad.mul(60).div(86400));
-    expect(await multiplyGobbler.getGooDeposit(5)).to.equal(finalGoo.sub(initialGoo));
+    expect(await multiplyGobbler.getGooDeposit(5)).to.closeTo(finalGoo.sub(initialGoo), 25261327590);
   });
 
   it("gobbler strategy", async () => {

@@ -256,6 +256,33 @@ describe("Multiply Gobbler tests", () => {
       expect(await multiplyGobbler.balanceOf(deployer.address)).to.closeTo(wad.mul(5).add(wad.mul(5).div(3)), 10);
     });
 
+    it("can claim lagged in seperate mint window after deposit tax", async () => {
+      await multiplyGobbler.connect(deployer).mintGobbler();
+      await multiplyGobbler.connect(deployer).deposit(0);
+      expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
+      await mockArtGobbler.connect(john).mint();
+      await multiplyGobbler.connect(john).depositWithLag(2);
+      expect(await multiplyGobbler.laggingDeposit(john.address, 1)).to.equal(5);
+      // 2 more mints happened
+      // the user can claim tokens now
+      await multiplyGobbler.connect(deployer).mintGobbler();
+      await multiplyGobbler.connect(deployer).mintGobbler();
+      // total Minted is greater than 2 deposit tax will activate
+      expect(await multiplyGobbler.totalMinted()).to.be.gt(2);
+      // assuming 5 multiplier per mint/deposit
+      await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 25);
+      // conversion rate is 5/20
+      expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(4));
+      await multiplyGobbler.connect(john).claimLagged([1]);
+      expect(await multiplyGobbler.laggingDeposit(john.address, 1)).to.equal(0);
+      expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
+      expect(await mockArtGobbler.ownerOf(2)).to.equal(multiplyGobbler.address);
+      expect(await multiplyGobbler.balanceOf(john.address)).to.equal(wad.mul(5).div(4).mul(995).div(1000));
+      expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(
+        wad.mul(5).add(wad.mul(5).div(4).mul(5).div(1000)),
+      );
+    });
+
     it("getConversionRate when totalLaggedMultiple > 0", async () => {
       await multiplyGobbler.connect(deployer).deposit(0);
       await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 5);

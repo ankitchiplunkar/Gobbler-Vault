@@ -3,6 +3,7 @@ pragma solidity >=0.8.4;
 
 import { IArtGobbler } from "./IArtGobbler.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { ERC721TokenReceiver } from "solmate/src/tokens/ERC721.sol";
 import { Owned } from "solmate/src/auth/Owned.sol";
 import { LibGOO } from "./LibGOO.sol";
@@ -10,6 +11,7 @@ import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 
 contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     IArtGobbler public immutable artGobbler;
+    IERC20 public immutable goo;
     uint256 public lastMintEmissionMultiple;
     uint256 public lastMintGooBalance;
     uint256 public lastMintTimestamp;
@@ -28,8 +30,9 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
 
     // TODO: add events
 
-    constructor(address _artGobbler) ERC20("Multiply Gobbler", "mGOB", 18) Owned(msg.sender) {
+    constructor(address _artGobbler, address _goo) ERC20("Multiply Gobbler", "mGOB", 18) Owned(msg.sender) {
         artGobbler = IArtGobbler(_artGobbler);
+        goo = IERC20(_goo);
     }
 
     // View functions
@@ -96,8 +99,10 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
         // transfer go debt into the vault
         uint256 gooDeposit = getGooDeposit(multiplier);
         if (gooDeposit > 0) {
-            bool success = artGobbler.transferGooFrom(msg.sender, address(this), gooDeposit);
+            bool success = goo.transferFrom(msg.sender, address(this), gooDeposit);
             if (!success) revert GooDepositFailed();
+            // adds any goo erc20 balance into the vaults virtual balance
+            artGobbler.addGoo(goo.balanceOf(address(this)));
         }
         _mgobMint(multiplier, getConversionRate(), msg.sender);
     }

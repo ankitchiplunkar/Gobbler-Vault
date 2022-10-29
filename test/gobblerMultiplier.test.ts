@@ -4,14 +4,20 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { ethers } from "hardhat";
 
-import { LibGOO, MockArtGobbler, MultiplyGobblerVault } from "../types/contracts";
-import { LibGOO__factory, MockArtGobbler__factory, MultiplyGobblerVault__factory } from "../types/factories/contracts";
+import { LibGOO, MockArtGobbler, MockGoo, MultiplyGobblerVault } from "../types/contracts";
+import {
+  LibGOO__factory,
+  MockArtGobbler__factory,
+  MockGoo__factory,
+  MultiplyGobblerVault__factory,
+} from "../types/factories/contracts";
 
 chai.use(solidity);
 const { expect } = chai;
 
 describe("Multiply Gobbler tests", () => {
   let mockArtGobbler: MockArtGobbler;
+  let mockGoo: MockGoo;
   let multiplyGobbler: MultiplyGobblerVault;
   let libGoo: LibGOO;
   let deployer: SignerWithAddress;
@@ -33,7 +39,9 @@ describe("Multiply Gobbler tests", () => {
         },
       },
     );
-    multiplyGobbler = await multiplyGobblerFactory.deploy(mockArtGobbler.address);
+    const mockGooFactory = new MockGoo__factory(deployer);
+    mockGoo = await mockGooFactory.deploy();
+    multiplyGobbler = await multiplyGobblerFactory.deploy(mockArtGobbler.address, mockGoo.address);
 
     await mockArtGobbler.connect(deployer).mint();
     await mockArtGobbler.connect(deployer).setApprovalForAll(multiplyGobbler.address, true);
@@ -167,6 +175,7 @@ describe("Multiply Gobbler tests", () => {
     await ethers.provider.send("evm_increaseTime", [60]);
     await ethers.provider.send("evm_mine", []);
     expect(await multiplyGobbler.getGooDeposit(5)).to.gt(0);
+    await mockGoo.connect(deployer).approve(multiplyGobbler.address, wad.mul(1000));
     await multiplyGobbler.connect(deployer).deposit(0);
     expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
     expect(await multiplyGobbler.totalSupply()).to.equal(wad.mul(5));
@@ -182,6 +191,8 @@ describe("Multiply Gobbler tests", () => {
     expect(await multiplyGobbler.totalMinted()).to.equal(3);
     // transferring tokens to non-owner to check post tax balances
     await mockArtGobbler.connect(deployer).transferFrom(deployer.address, john.address, 0);
+    await mockGoo.connect(deployer).transfer(john.address, wad.mul(100));
+    await mockGoo.connect(john).approve(multiplyGobbler.address, wad.mul(100));
     await multiplyGobbler.connect(john).deposit(0);
     // verifying final balances
     expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5).mul(5).div(1000));
@@ -237,6 +248,7 @@ describe("Multiply Gobbler tests", () => {
 
     it("can claim lagged in seperate mint window", async () => {
       await multiplyGobbler.connect(deployer).mintGobbler();
+      await mockGoo.connect(deployer).approve(multiplyGobbler.address, wad.mul(1000));
       await multiplyGobbler.connect(deployer).deposit(0);
       expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
       await mockArtGobbler.connect(deployer).mint();
@@ -258,6 +270,7 @@ describe("Multiply Gobbler tests", () => {
 
     it("can claim lagged in seperate mint window after deposit tax", async () => {
       await multiplyGobbler.connect(deployer).mintGobbler();
+      await mockGoo.connect(deployer).approve(multiplyGobbler.address, wad.mul(1000));
       await multiplyGobbler.connect(deployer).deposit(0);
       expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
       await mockArtGobbler.connect(john).mint();

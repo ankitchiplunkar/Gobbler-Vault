@@ -10,23 +10,30 @@ import { LibGOO } from "./LibGOO.sol";
 import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 
 contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
+    // TODO: add code comments in NATSPEC format
     IArtGobbler public immutable artGobbler;
     IERC20 public immutable goo;
+
     uint256 public lastMintEmissionMultiple;
     uint256 public lastMintGooBalance;
     uint256 public lastMintTimestamp;
     uint256 public totalMinted = 0;
     uint256 public totalLaggedMultiple = 0;
+
     uint256 public constant PRECISION = 1e6;
     uint256 public constant TAX_RATE = 5000;
     uint256 public constant DEPOSIT_TAX_START_AFTER = 2;
+    uint256 public constant GOO_DEPOSIT_START_AFTER = 2;
+
     mapping(address => mapping(uint256 => uint256)) public laggingDeposit;
+    mapping(uint256 => uint256) public mintedGobbledId;
 
     // TODO: add error messages
-    // TODO: add code comments in correct format
     error GooDepositFailed();
     error TotalMintedIsZero();
     error ClaimingInLowerMintWindow();
+    error UnrevealedGobbler();
+    error MintedGobblerUnrevealed();
 
     // TODO: add events
 
@@ -49,11 +56,10 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     // Used to calculate Goo to be deposited with a Gobbler
     // getGooDeposit is the extra Goo produced by a Gobbler from last mint to block.timestamp
     function getGooDeposit(uint256 multiplier) public view returns (uint256) {
-        // Do not take any goo deposit till the first mint
-        // this will expose the vault for MEV etc in the first mint
-        // intention is to test teh vault till the first mint anyways
-        // second option is to update the lastMint values at the first deposit
-        if (totalMinted == 0) return 0;
+        // Do not take any goo deposit till the GOO_DEPOSIT_START_AFTER mint
+        // this will expose the vault for MEV etc in the first few mints
+        // intention is to test the vault till the first mints anyways
+        if (totalMinted <= GOO_DEPOSIT_START_AFTER) return 0;
         return
             LibGOO.computeGOOBalance(
                 lastMintEmissionMultiple + multiplier,
@@ -73,6 +79,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
         return artGobbler.gooBalance(address(this));
     }
 
+    // Internal functions
     function _mgobMint(
         uint256 multplierToMint,
         uint256 conversionRate,
@@ -111,6 +118,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     function withdraw(uint256 id) public {
         // multiplier of to be withdrawn gobbler
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
+        if (multiplier == 0) revert UnrevealedGobbler();
         // burn the mGOB tokens to depositor
         _burn(msg.sender, multiplier * getConversionRate());
         // transfer art gobbler to the withdrawer
@@ -134,6 +142,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     function withdrawLagged(uint256 id) public {
         // multiplier of to be withdrawn gobbler
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
+        // if the multiplier is 0 i.e. unrevealed then do not let the user withdraw gobblers
+        if (multiplier == 0) revert UnrevealedGobbler();
         // update users laggingDeposit amounts
         laggingDeposit[msg.sender][totalMinted] -= multiplier;
         totalLaggedMultiple -= multiplier;
@@ -142,13 +152,18 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     }
 
     // enables claiming mGOB tokens after the next mint
+    // TODO make it claimable when the new minted gobbler has been revealed
     function claimLagged(uint256[] calldata whenMinted) public {
         for (uint256 i = 0; i < whenMinted.length; i++) {
-            // cannot claim deposit if the next token has not been minted
-            if (totalMinted <= whenMinted[i]) revert ClaimingInLowerMintWindow();
-            uint256 sendersLaggedMultiple = laggingDeposit[msg.sender][whenMinted[i]];
+            uint256 mintNumber = whenMinted[i];
+            // cannot claim deposit if the next gobbler has not been minted
+            if (totalMinted <= mintNumber) revert ClaimingInLowerMintWindow();
+            // cannot claim deposit if the minted gobbler has not been revealed
+            uint256 mintedGobblerMultiplier = artGobbler.getGobblerEmissionMultiple(mintedGobbledId[mintNumber]);
+            if (mintedGobblerMultiplier == 0) revert MintedGobblerUnrevealed();
+            uint256 sendersLaggedMultiple = laggingDeposit[msg.sender][mintNumber];
             _mgobMint(sendersLaggedMultiple, getConversionRate(), msg.sender);
-            laggingDeposit[msg.sender][whenMinted[i]] = 0;
+            laggingDeposit[msg.sender][mintNumber] = 0;
             totalLaggedMultiple -= sendersLaggedMultiple;
         }
     }
@@ -159,10 +174,10 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     // If someone withdraws Gobblers before calling this function (in expectation of paying less Goo balance on Deposit)
     // They will lose out on minted multiplier rewards by the time they deposit
     function mintGobbler() public {
-        artGobbler.mintFromGoo(gobblerStrategy(), true);
         lastMintEmissionMultiple = artGobbler.getUserEmissionMultiple(address(this));
         lastMintGooBalance = artGobbler.gooBalance(address(this));
         lastMintTimestamp = block.timestamp;
+        mintedGobbledId[totalMinted] = artGobbler.mintFromGoo(gobblerStrategy(), true);
         totalMinted += 1;
     }
 

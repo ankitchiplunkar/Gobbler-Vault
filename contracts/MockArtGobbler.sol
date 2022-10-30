@@ -10,10 +10,19 @@ contract MockArtGobbler is ERC721 {
     uint256 public nextIndexToMint = 0;
     mapping(address => uint256) public userEmissionMultiple;
     mapping(address => uint256) public userGooBalance;
+    uint256 public unrevealedGobbler = 100;
+
+    function unrevealGobbler(uint256 id) external {
+        unrevealedGobbler = id;
+    }
 
     // hardcoding this to 5
-    function getGobblerEmissionMultiple(uint256 gobblerID) external pure returns (uint256) {
-        return 5;
+    function getGobblerEmissionMultiple(uint256 gobblerID) external view returns (uint256) {
+        if (gobblerID == unrevealedGobbler) {
+            return 0;
+        } else {
+            return 5;
+        }
     }
 
     function setUserEmissionMultiple(address user, uint256 emissionMultiple) external {
@@ -36,13 +45,14 @@ contract MockArtGobbler is ERC721 {
         return 10**18;
     }
 
-    function mint() public {
+    function mint() public returns (uint256) {
         _mint(msg.sender, nextIndexToMint);
         nextIndexToMint++;
+        return nextIndexToMint - 1;
     }
 
     function mintFromGoo(uint256 maxPrice, bool useVirtualBalance) external returns (uint256 gobblerId) {
-        mint();
+        return mint();
     }
 
     function addGoo(uint256 gooAmount) external {

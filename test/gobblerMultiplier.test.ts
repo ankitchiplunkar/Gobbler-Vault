@@ -69,12 +69,14 @@ describe("Multiply Gobbler tests", () => {
     expect(await multiplyGobbler.getGooDeposit(5)).to.equal(0);
     // total minted is non zero but no time has passed
     await multiplyGobbler.connect(deployer).mintGobbler();
-    expect(await multiplyGobbler.totalMinted()).to.equal(1);
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    expect(await multiplyGobbler.totalMinted()).to.equal(3);
     expect(await multiplyGobbler.getGooDeposit(5)).to.equal(0);
     // total minted > 0 and 60 secs have elapsed
     await ethers.provider.send("evm_increaseTime", [60]);
     await ethers.provider.send("evm_mine", []);
-    expect(await multiplyGobbler.totalMinted()).to.equal(1);
+    expect(await multiplyGobbler.totalMinted()).to.equal(3);
     let initialGoo = await libGoo.computeGOOBalance(0, 0, wad.mul(60));
     let finalGoo = await libGoo.computeGOOBalance(5, 0, wad.mul(60).div(86400));
     // adding this close to since the test is failing in CI for some reason
@@ -138,6 +140,19 @@ describe("Multiply Gobbler tests", () => {
     expect(await mockArtGobbler.ownerOf(0)).to.equal(deployer.address);
   });
 
+  it("cannot withdraw if gobbler is unrevealed", async () => {
+    await multiplyGobbler.connect(deployer).deposit(0);
+    await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 5);
+    const totalMinted = await multiplyGobbler.totalMinted();
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    const mintedGobblerId = await multiplyGobbler.mintedGobbledId(totalMinted);
+    await mockArtGobbler.unrevealGobbler(mintedGobblerId);
+    await expect(multiplyGobbler.connect(deployer).withdraw(mintedGobblerId)).to.be.revertedWithCustomError(
+      multiplyGobbler,
+      "UnrevealedGobbler",
+    );
+  });
+
   it("withdraw when there are more multipliers due to mint", async () => {
     await multiplyGobbler.connect(deployer).deposit(0);
     await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 10);
@@ -171,7 +186,9 @@ describe("Multiply Gobbler tests", () => {
 
   it("deposit when gooDeposit is non zero", async () => {
     await multiplyGobbler.connect(deployer).mintGobbler();
-    expect(await multiplyGobbler.totalMinted()).to.equal(1);
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    await multiplyGobbler.connect(deployer).mintGobbler();
+    expect(await multiplyGobbler.totalMinted()).to.equal(3);
     await ethers.provider.send("evm_increaseTime", [60]);
     await ethers.provider.send("evm_mine", []);
     expect(await multiplyGobbler.getGooDeposit(5)).to.gt(0);
@@ -224,6 +241,19 @@ describe("Multiply Gobbler tests", () => {
       expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(0);
       expect(await mockArtGobbler.ownerOf(0)).to.equal(deployer.address);
       expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(0);
+    });
+
+    it("cannot withdraw lagged if gobbler is unrevealed", async () => {
+      const totalMinted = await multiplyGobbler.totalMinted();
+      await multiplyGobbler.connect(deployer).mintGobbler();
+      const mintedGobblerId = await multiplyGobbler.mintedGobbledId(totalMinted);
+      await mockArtGobbler.unrevealGobbler(mintedGobblerId);
+      await multiplyGobbler.connect(deployer).depositWithLag(0);
+      expect(await multiplyGobbler.laggingDeposit(deployer.address, 1)).to.equal(5);
+      await expect(multiplyGobbler.connect(deployer).withdrawLagged(mintedGobblerId)).to.be.revertedWithCustomError(
+        multiplyGobbler,
+        "UnrevealedGobbler",
+      );
     });
 
     it("cannot withdraw lagged after a mint", async () => {

@@ -10,7 +10,7 @@ contract MockArtGobbler is ERC721 {
     uint256 public nextIndexToMint = 0;
     mapping(address => uint256) public userEmissionMultiple;
     mapping(address => uint256) public userGooBalance;
-    uint256 public unrevealedGobbler;
+    uint256 public unrevealedGobbler = 100;
 
     function unrevealGobbler(uint256 id) external {
         unrevealedGobbler = id;

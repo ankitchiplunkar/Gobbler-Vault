@@ -242,7 +242,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     /// @dev Any address can call this function and mint a Gobbler
     /// @dev Strategy should return Goo > GobblerPrice() for the transaction to succeed
     /// @dev Also stores emissionMultiple, GooBalance and Timestamp at time of mint
-    /// @dev If someone withdraws Gobblers before calling this function (in expectation of paying less Goo balance on Deposit)
+    /// @dev If someone withdraws Gobblers before calling this function
+    /// @dev In expectation of paying less Goo balance on Deposit
     /// @dev They will lose out on minted multiplier rewards by the time they deposit
     function mintGobbler() public {
         mintedGobbledId[totalMinted] = artGobbler.mintFromGoo(gobblerStrategy(), true);
@@ -253,7 +254,6 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     }
 
     /// @notice Mint a legendary Gobbler form Gobblers in the vault
-
     /// @dev Any address can call this function and mint a Legendary Gobbler
     // TODO: add reentrancy guard here
     function mintLegendaryGobbler(uint256[] calldata gobblerIds) public {

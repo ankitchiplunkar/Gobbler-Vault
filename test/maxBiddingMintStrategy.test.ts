@@ -24,6 +24,7 @@ describe("Multiply Gobbler tests", () => {
   let libGoo: LibGOO;
   let deployer: SignerWithAddress;
   let wad: BigNumber;
+  const zeroAddress: string = "0x0000000000000000000000000000000000000000";
 
   beforeEach("deploy contracts", async () => {
     [deployer] = await ethers.getSigners();

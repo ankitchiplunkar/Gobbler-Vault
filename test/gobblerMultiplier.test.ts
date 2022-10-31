@@ -339,6 +339,4 @@ describe("Multiply Gobbler tests", () => {
       expect(await multiplyGobbler.getConversionRate()).to.equal(wad.div(3));
     });
   });
-
-  // TODO: Test mintLegendaryGobbler
 });

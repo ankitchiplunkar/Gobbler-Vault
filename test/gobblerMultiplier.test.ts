@@ -219,13 +219,6 @@ describe("Multiply Gobbler tests", () => {
   });
 
   describe("Test deposit with lag", async () => {
-    it("reverts deposit with lag if total minted is zero", async () => {
-      await expect(multiplyGobbler.connect(deployer).depositWithLag(0)).to.be.revertedWithCustomError(
-        multiplyGobbler,
-        "TotalMintedIsZero",
-      );
-    });
-
     it("deposit with lag", async () => {
       await multiplyGobbler.connect(deployer).mintGobbler();
       await multiplyGobbler.connect(deployer).depositWithLag(0);

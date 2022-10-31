@@ -2,6 +2,7 @@
 pragma solidity >=0.8.4;
 
 import { IArtGobbler } from "./IArtGobbler.sol";
+import { IMintStrategy } from "./IMintStrategy.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { ERC721TokenReceiver } from "solmate/src/tokens/ERC721.sol";
@@ -21,6 +22,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     IArtGobbler public immutable artGobbler;
     /// @notice The address of the Goo ERC20 token contract.
     IERC20 public immutable goo;
+    /// @notice The address of the Strategy contract.
+    IMintStrategy public mintStrategy;
 
     /*//////////////////////////////////////////////////////////////
                 Variables updated each mint    
@@ -47,7 +50,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     uint256 public constant GOO_DEPOSIT_START_AFTER = 2;
 
     /*//////////////////////////////////////////////////////////////
-                Lagged deposit mappings
+                Lagged deposit variables
     //////////////////////////////////////////////////////////////*/
     /// @notice Total multiple of the gobblers which are deposited in a lagged fashion
     uint256 public totalLaggedMultiple = 0;
@@ -65,15 +68,27 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     error UnrevealedGobbler();
     error MintedGobblerUnrevealed();
 
+    /*//////////////////////////////////////////////////////////////
+                EVENTS
+    //////////////////////////////////////////////////////////////*/
     // TODO add events
+    event MintStrategyChanged(address oldMintStrategy, address newMintStrategy);
 
+    /*//////////////////////////////////////////////////////////////
+                CONSTRUCTOR
+    //////////////////////////////////////////////////////////////*/
     /// @notice Constructor sets up contracts of the ecosystem and deploys erc20
     /// @dev Initializes the erc20 and owned constructor variables
     /// @param _artGobbler Address of the Art Gobbler ERC721 contract
     /// @param _goo Address of the Goo ERC20 contract
-    constructor(address _artGobbler, address _goo) ERC20("Multiply Gobbler", "mGOB", 18) Owned(msg.sender) {
+    constructor(
+        address _artGobbler,
+        address _goo,
+        address _mintStrategy
+    ) ERC20("Multiply Gobbler", "mGOB", 18) Owned(msg.sender) {
         artGobbler = IArtGobbler(_artGobbler);
         goo = IERC20(_goo);
+        mintStrategy = IMintStrategy(_mintStrategy);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -114,13 +129,6 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
                 lastMintGooBalance,
                 uint256(toDaysWadUnsafe(block.timestamp - lastMintTimestamp))
             );
-    }
-
-    /// @notice Implements the strategy which will be used to buy Gobblers from virtual GOO
-    /// @dev Currently implements the MAX BIDDING strategy! Buy ASAP
-    /// @return Goo which can be used to buy a Gobbler
-    function gobblerStrategy() public view returns (uint256) {
-        return artGobbler.gooBalance(address(this));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -246,7 +254,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     /// @dev In expectation of paying less Goo balance on Deposit
     /// @dev They will lose out on minted multiplier rewards by the time they deposit
     function mintGobbler() public {
-        mintedGobbledId[totalMinted] = artGobbler.mintFromGoo(gobblerStrategy(), true);
+        mintedGobbledId[totalMinted] = artGobbler.mintFromGoo(mintStrategy.gobblerMintStrategy(), true);
         lastMintEmissionMultiple = artGobbler.getUserEmissionMultiple(address(this));
         lastMintGooBalance = artGobbler.gooBalance(address(this));
         lastMintTimestamp = block.timestamp;
@@ -256,7 +264,14 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
     /// @notice Mint a legendary Gobbler form Gobblers in the vault
     /// @dev Any address can call this function and mint a Legendary Gobbler
     // TODO: add reentrancy guard here
+    // TODO: add tests here
     function mintLegendaryGobbler(uint256[] calldata gobblerIds) public {
-        artGobbler.mintLegendaryGobbler(gobblerIds);
+        artGobbler.mintLegendaryGobbler(mintStrategy.legendaryGobblerMintStrategy(gobblerIds));
+    }
+
+    function changeMintStrategy(address _newStrategyAddress) public onlyOwner {
+        address oldStrategy = address(mintStrategy);
+        mintStrategy = IMintStrategy(_newStrategyAddress);
+        emit MintStrategyChanged(oldStrategy, _newStrategyAddress);
     }
 }

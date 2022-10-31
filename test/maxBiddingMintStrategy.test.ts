@@ -23,12 +23,10 @@ describe("Multiply Gobbler tests", () => {
   let maxBiddingMintStrategy: MaxBiddingMintStrategy;
   let libGoo: LibGOO;
   let deployer: SignerWithAddress;
-  let john: SignerWithAddress;
   let wad: BigNumber;
-  const zeroAddress: string = "0x0000000000000000000000000000000000000000";
 
   beforeEach("deploy contracts", async () => {
-    [deployer, john] = await ethers.getSigners();
+    [deployer] = await ethers.getSigners();
     wad = ethers.BigNumber.from("1000000000000000000");
     const mockFactory = new MockArtGobbler__factory(deployer);
     mockArtGobbler = await mockFactory.deploy();

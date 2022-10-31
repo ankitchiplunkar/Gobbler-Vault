@@ -6,6 +6,7 @@ import { IMintStrategy } from "./IMintStrategy.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { ERC721TokenReceiver } from "solmate/src/tokens/ERC721.sol";
+import { ReentrancyGuard } from "solmate/src/utils/ReentrancyGuard.sol";
 import { Owned } from "solmate/src/auth/Owned.sol";
 import { LibGOO } from "./LibGOO.sol";
 import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
@@ -14,7 +15,7 @@ import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 /// @author Ankit Chiplunkar
 /// @notice Use this contract to stake Gobblers and mint based on stratergies
 /// @dev Contract accepts Gobblers and uses the generated Goo to buy more Gobblers
-contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
+contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                 ART GOBBLERS CONTRACTS
     //////////////////////////////////////////////////////////////*/
@@ -263,9 +264,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned {
 
     /// @notice Mint a legendary Gobbler form Gobblers in the vault
     /// @dev Any address can call this function and mint a Legendary Gobbler
-    // TODO: add reentrancy guard here
     // TODO: add tests here
-    function mintLegendaryGobbler(uint256[] calldata gobblerIds) public {
+    function mintLegendaryGobbler(uint256[] calldata gobblerIds) public nonReentrant {
         artGobbler.mintLegendaryGobbler(mintStrategy.legendaryGobblerMintStrategy(gobblerIds));
     }
 

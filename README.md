@@ -2,15 +2,22 @@
 
 Multiply Gobbler Vault **multiplies** your Gobblers.
 
+## What is its purpose?
+
+Increases accessibility!
+
+- Gobbler holders can stake their Gobbler in the vault and let the vault manage buying of new Gobbler.
+- Gobblers are only 10k but mGobs are many. Users who cannot get in a mint can buy mGOB and partake in the upside of the Gobbler ecosystem.
+
 ## How does it work?
 
-1. Users can [deposit](https://github.com/ankitchiplunkar/Gobbler-Vault/blob/main/contracts/MultiplyGobblerVault.sol#L27) their Gobblers in the vault and receive ERC20 compliant `mGOB` tokens in return, proportional to the multiplier of the deposited Gobbler.
-2. Similarly users can [withdraw](https://github.com/ankitchiplunkar/Gobbler-Vault/blob/main/contracts/MultiplyGobblerVault.sol#L37) any Gobbler from the vault by burning `mGOB` tokens proportional to the multiplier of the withdrawn Gobbler.
+1. Users can `deposit` their Gobblers in the vault and receive ERC20 compliant `mGOB` tokens in return, proportional to the multiplier of the deposited Gobbler.
+2. Similarly users can `withdraw` any Gobbler from the vault by burning `mGOB` tokens proportional to the multiplier of the withdrawn Gobbler.
 3. `mGOB` can be bought, sold or LP'ed on Uniswap.
-4. The Goo generated from the vault can be used to [mint](https://github.com/ankitchiplunkar/Gobbler-Vault/blob/main/contracts/MultiplyGobblerVault.sol#L54) Gobblers based on a strategy.
-5. Current [strategy](https://github.com/ankitchiplunkar/Gobbler-Vault/blob/main/contracts/MultiplyGobblerVault.sol#L48) is MAX BIDDING!, i.e. buy Gobbler as soon as enough GOO is available.
-6. When Gobblers are in the vault then the vault can also [mint](https://github.com/ankitchiplunkar/Gobbler-Vault/blob/main/contracts/MultiplyGobblerVault.sol#L60) a Legendary Gobbler.
-7. As more multiplier gets accumulated into the vault, price of `mGOB` [appreciates](https://github.com/ankitchiplunkar/Gobbler-Vault/blob/main/contracts/MultiplyGobblerVault.sol#L17). If a user deposits a Gobbler and the Vault mints another Gobbler (using Goo) then the user can withdraw twice the amount of Gobblers for the same amount of `mGOB` tokens. i.e. **Multiplying your Gobblers**
+4. The Goo generated from the vault can be used to `mint` Gobblers based on a strategy.
+5. Current strategy is MAX BIDDING!, i.e. buy Gobbler as soon as enough GOO is available.
+6. When Gobblers are in the vault then the vault can also `mint` a Legendary Gobbler.
+7. As more multiplier gets accumulated into the vault, price of `mGOB` appreciates. If a user deposits a Gobbler and the Vault mints another Gobbler (using Goo) then the user can withdraw twice the amount of Gobblers for the same amount of `mGOB` tokens. i.e. **Multiplying your Gobblers**
 
 ## Who can use this?
 
@@ -91,4 +98,6 @@ $ yarn clean
 
 ## License
 
-[MIT](./LICENSE.md) © Paul Razvan Berg
+[MIT](./LICENSE.md)
+
+Template © Paul Razvan Berg

@@ -264,11 +264,15 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
 
     /// @notice Mint a legendary Gobbler form Gobblers in the vault
     /// @dev Any address can call this function and mint a Legendary Gobbler
+    /// @dev Adding reentrancy guard since folks can deposit mint and then withdraw instantly after
     // TODO: add tests here
     function mintLegendaryGobbler(uint256[] calldata gobblerIds) public nonReentrant {
         artGobbler.mintLegendaryGobbler(mintStrategy.legendaryGobblerMintStrategy(gobblerIds));
     }
 
+    /// @notice Change the address of MintStrategy contract
+    /// @dev Only owner can call this function
+    /// @param _newStrategyAddress address of the new mint strategy
     function changeMintStrategy(address _newStrategyAddress) public onlyOwner {
         address oldStrategy = address(mintStrategy);
         mintStrategy = IMintStrategy(_newStrategyAddress);

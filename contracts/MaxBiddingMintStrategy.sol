@@ -9,7 +9,6 @@ import { MultiplyGobblerVault } from "./MultiplyGobblerVault.sol";
 /// @author Ankit Chiplunkar
 /// @notice Defines the strategy used to mint Gobblers and legendary Gobblers
 contract MaxBiddingMintStrategy is IMintStrategy {
-    // TODO write tests
     /*//////////////////////////////////////////////////////////////
                 ART GOBBLERS CONTRACTS
     //////////////////////////////////////////////////////////////*/

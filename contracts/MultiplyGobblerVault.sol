@@ -72,7 +72,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
     /*//////////////////////////////////////////////////////////////
                 EVENTS
     //////////////////////////////////////////////////////////////*/
-    // TODO add events
+    event GobblerMinted(uint256 gobblerId);
+    event LegendaryGobblerMinted(uint256 numGobblersBurnt);
     event MintStrategyChanged(address oldMintStrategy, address newMintStrategy);
 
     /*//////////////////////////////////////////////////////////////
@@ -204,27 +205,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
         // transfer art gobbler into the vault
         artGobbler.safeTransferFrom(msg.sender, address(this), id);
         // update users laggingDeposit amounts
-        // TODO: place depositTax here so that users cannot withdraw a desired gobbler without paying the deposit tax
         laggingDeposit[msg.sender][totalMinted] += multiplier;
         totalLaggedMultiple += multiplier;
-    }
-
-    /// @notice Withdraw Gobbler inbetween mints
-    /// @dev Cannot withdraw an unrevealed Gobbler i.e. multiplier = 0
-    /// @dev Updates the variable totalLaggedMultiple so that the conversionRate does not change due to a lagged deposit
-    /// @dev mGOB tokens can only be claimed after a new Gobbler is minted
-    /// @dev can only withdraw from current deposit
-    /// @param id id of the gobbler to withdraw
-    function withdrawLagged(uint256 id) public {
-        // multiplier of to be withdrawn gobbler
-        uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
-        // if the multiplier is 0 i.e. unrevealed then do not let the user withdraw gobblers
-        if (multiplier == 0) revert UnrevealedGobbler();
-        // update users laggingDeposit amounts
-        laggingDeposit[msg.sender][totalMinted] -= multiplier;
-        totalLaggedMultiple -= multiplier;
-        // transfer art gobbler to the withdrawer
-        artGobbler.safeTransferFrom(address(this), msg.sender, id);
     }
 
     /// @notice Claim the tokens from a lagged deposit
@@ -260,14 +242,15 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
         lastMintGooBalance = artGobbler.gooBalance(address(this));
         lastMintTimestamp = block.timestamp;
         totalMinted += 1;
+        emit GobblerMinted(mintedGobbledId[totalMinted]);
     }
 
     /// @notice Mint a legendary Gobbler form Gobblers in the vault
     /// @dev Any address can call this function and mint a Legendary Gobbler
     /// @dev Adding reentrancy guard since folks can deposit mint and then withdraw instantly after
-    // TODO: add tests here
     function mintLegendaryGobbler(uint256[] calldata gobblerIds) public nonReentrant {
         artGobbler.mintLegendaryGobbler(mintStrategy.legendaryGobblerMintStrategy(gobblerIds));
+        emit LegendaryGobblerMinted(gobblerIds.length);
     }
 
     /// @notice Change the address of MintStrategy contract

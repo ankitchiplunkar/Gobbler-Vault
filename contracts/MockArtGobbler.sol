@@ -55,6 +55,10 @@ contract MockArtGobbler is ERC721 {
         return mint();
     }
 
+    function mintLegendaryGobbler(uint256[] calldata gobblerIds) external returns (uint256 gobblerId) {
+        return 1001;
+    }
+
     function addGoo(uint256 gooAmount) external {
         userGooBalance[msg.sender] += gooAmount;
     }

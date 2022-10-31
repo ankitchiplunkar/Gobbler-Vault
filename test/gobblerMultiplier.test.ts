@@ -4,9 +4,10 @@ import chai from "chai";
 import { solidity } from "ethereum-waffle";
 import { ethers } from "hardhat";
 
-import { LibGOO, MockArtGobbler, MockGoo, MultiplyGobblerVault } from "../types/contracts";
+import { LibGOO, MaxBiddingMintStrategy, MockArtGobbler, MockGoo, MultiplyGobblerVault } from "../types/contracts";
 import {
   LibGOO__factory,
+  MaxBiddingMintStrategy__factory,
   MockArtGobbler__factory,
   MockGoo__factory,
   MultiplyGobblerVault__factory,
@@ -19,10 +20,12 @@ describe("Multiply Gobbler tests", () => {
   let mockArtGobbler: MockArtGobbler;
   let mockGoo: MockGoo;
   let multiplyGobbler: MultiplyGobblerVault;
+  let maxBiddingMintStrategy: MaxBiddingMintStrategy;
   let libGoo: LibGOO;
   let deployer: SignerWithAddress;
   let john: SignerWithAddress;
   let wad: BigNumber;
+  const zeroAddress: string = "0x0000000000000000000000000000000000000000";
 
   beforeEach("deploy contracts", async () => {
     [deployer, john] = await ethers.getSigners();
@@ -41,11 +44,19 @@ describe("Multiply Gobbler tests", () => {
     );
     const mockGooFactory = new MockGoo__factory(deployer);
     mockGoo = await mockGooFactory.deploy();
-    multiplyGobbler = await multiplyGobblerFactory.deploy(mockArtGobbler.address, mockGoo.address);
+    multiplyGobbler = await multiplyGobblerFactory.deploy(mockArtGobbler.address, mockGoo.address, zeroAddress);
 
     await mockArtGobbler.connect(deployer).mint();
     await mockArtGobbler.connect(deployer).setApprovalForAll(multiplyGobbler.address, true);
     await mockArtGobbler.connect(john).setApprovalForAll(multiplyGobbler.address, true);
+
+    // deploying the strategy
+    const maxBiddingMintStrategyFactory = new MaxBiddingMintStrategy__factory(deployer);
+    maxBiddingMintStrategy = await maxBiddingMintStrategyFactory.deploy(
+      mockArtGobbler.address,
+      multiplyGobbler.address,
+    );
+    multiplyGobbler.connect(deployer).changeMintStrategy(maxBiddingMintStrategy.address);
   });
 
   // Testing view functions
@@ -91,14 +102,17 @@ describe("Multiply Gobbler tests", () => {
     expect(await multiplyGobbler.getGooDeposit(5)).to.closeTo(finalGoo.sub(initialGoo), 25261327590);
   });
 
-  it("gobbler strategy", async () => {
-    const gooBalance = 10;
-    await mockArtGobbler.setGooBalance(multiplyGobbler.address, gooBalance);
-    expect(await multiplyGobbler.gobblerStrategy()).to.equal(gooBalance);
-  });
-
   it("checks owner", async () => {
     expect(await multiplyGobbler.owner()).to.equal(deployer.address);
+  });
+
+  // Testing onlyOwner functions
+  it("only owner can change the strategyAddress", async () => {
+    await expect(multiplyGobbler.connect(john).changeMintStrategy(zeroAddress)).to.be.revertedWith("UNAUTHORIZED");
+    await expect(multiplyGobbler.connect(deployer).changeMintStrategy(zeroAddress))
+      .to.emit(multiplyGobbler, "MintStrategyChanged")
+      .withArgs(maxBiddingMintStrategy.address, zeroAddress);
+    expect(await multiplyGobbler.mintStrategy()).to.equal(zeroAddress);
   });
 
   // Testing state changing functions

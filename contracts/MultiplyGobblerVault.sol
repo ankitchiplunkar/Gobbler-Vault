@@ -17,7 +17,7 @@ import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 /// @dev Contract accepts Gobblers and uses the generated Goo to buy more Gobblers
 contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
-                ART GOBBLERS CONTRACTS
+                ADDRESS VARIABLES
     //////////////////////////////////////////////////////////////*/
     /// @notice The address of the ArtGobblers ERC721 token contract.
     IArtGobbler public immutable artGobbler;
@@ -25,6 +25,8 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
     IERC20 public immutable goo;
     /// @notice The address of the Strategy contract.
     IMintStrategy public mintStrategy;
+    /// @notice The address which receives the tax
+    address public taxAddress;
 
     /*//////////////////////////////////////////////////////////////
                 Variables updated each mint    
@@ -75,6 +77,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
     event GobblerMinted(uint256 gobblerId);
     event LegendaryGobblerMinted(uint256 numGobblersBurnt);
     event MintStrategyChanged(address oldMintStrategy, address newMintStrategy);
+    event TaxAddressChanged(address oldTaxAddress, address newTaxAddress);
 
     /*//////////////////////////////////////////////////////////////
                 CONSTRUCTOR
@@ -150,7 +153,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
         // mint the mGOB tokens to receiver
         if (totalMinted > DEPOSIT_TAX_START_AFTER) {
             uint256 depositTax = (multplierToMint * conversionRate * TAX_RATE) / PRECISION;
-            _mint(owner, depositTax);
+            _mint(taxAddress, depositTax);
             _mint(receiver, multplierToMint * conversionRate - depositTax);
         } else {
             _mint(receiver, multplierToMint * conversionRate);
@@ -260,5 +263,14 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
         address oldStrategy = address(mintStrategy);
         mintStrategy = IMintStrategy(_newStrategyAddress);
         emit MintStrategyChanged(oldStrategy, _newStrategyAddress);
+    }
+
+    /// @notice Change the address of address which receives tax
+    /// @dev Only owner can call this function
+    /// @param _newTaxAddress address of the new mint strategy
+    function changeTaxAddress(address _newTaxAddress) public onlyOwner {
+        address oldTaxAddress = taxAddress;
+        taxAddress = _newTaxAddress;
+        emit TaxAddressChanged(oldTaxAddress, _newTaxAddress);
     }
 }

@@ -9,7 +9,7 @@ on:
       - "main"
 
 jobs:
-  ci:
+  ci-core:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Check out the repo"
@@ -18,7 +18,8 @@ jobs:
       - name: "Install Node.js"
         uses: "actions/setup-node@v3"
         with:
-          cache: "yarn --cwd core"
+          cache: "yarn"
+          cache-dependency-path: "**/yarn.lock"
           node-version: "16"
 
       # Inject all environment variables from ".env.example" in $GITHUB_ENV

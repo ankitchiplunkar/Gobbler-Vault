@@ -18,7 +18,7 @@ jobs:
       - name: "Install Node.js"
         uses: "actions/setup-node@v3"
         with:
-          cache: "yarn"
+          cache: "yarn --cwd core"
           node-version: "16"
 
       # Inject all environment variables from ".env.example" in $GITHUB_ENV
@@ -28,10 +28,10 @@ jobs:
           env-file: ".env.example"
 
       - name: "Install the dependencies"
-        run: "yarn install --immutable"
+        run: "yarn install --cwd core --immutable"
 
       - name: "Lint the code"
-        run: "yarn lint"
+        run: "yarn --cwd core lint"
 
       - name: "Add lint summary"
         run: |
@@ -39,10 +39,10 @@ jobs:
           echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
 
       - name: "Compile the contracts and generate the TypeChain bindings"
-        run: "yarn typechain"
+        run: "yarn --cwd core typechain"
 
       - name: "Test the contracts and generate the coverage report"
-        run: "yarn coverage"
+        run: "yarn --cwd core coverage"
 
       - name: "Add test summary"
         run: |

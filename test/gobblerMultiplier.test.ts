@@ -115,6 +115,15 @@ describe("Multiply Gobbler tests", () => {
     expect(await multiplyGobbler.mintStrategy()).to.equal(zeroAddress);
   });
 
+  it("only owner can change the TaxAddress", async () => {
+    expect(await multiplyGobbler.taxAddress()).to.equal(zeroAddress);
+    await expect(multiplyGobbler.connect(john).changeTaxAddress(deployer.address)).to.be.revertedWith("UNAUTHORIZED");
+    await expect(multiplyGobbler.connect(deployer).changeTaxAddress(deployer.address))
+      .to.emit(multiplyGobbler, "TaxAddressChanged")
+      .withArgs(zeroAddress, deployer.address);
+    expect(await multiplyGobbler.taxAddress()).to.equal(deployer.address);
+  });
+
   // Testing state changing functions
   it("fresh deposit", async () => {
     const balanceAfter = wad.mul(5);
@@ -219,7 +228,8 @@ describe("Multiply Gobbler tests", () => {
     expect(await multiplyGobbler.getGooDeposit(5)).to.gt(0);
     await mockGoo.connect(deployer).approve(multiplyGobbler.address, wad.mul(1000));
     await multiplyGobbler.connect(deployer).deposit(0);
-    expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
+    expect(await multiplyGobbler.balanceOf(zeroAddress)).to.equal(wad.mul(5).mul(5).div(1000)); // tax payment
+    expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5).mul(995).div(1000));
     expect(await multiplyGobbler.totalSupply()).to.equal(wad.mul(5));
     expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
   });
@@ -237,7 +247,7 @@ describe("Multiply Gobbler tests", () => {
     await mockGoo.connect(john).approve(multiplyGobbler.address, wad.mul(100));
     await multiplyGobbler.connect(john).deposit(0);
     // verifying final balances
-    expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5).mul(5).div(1000));
+    expect(await multiplyGobbler.balanceOf(zeroAddress)).to.equal(wad.mul(5).mul(5).div(1000)); // tax payment
     expect(await multiplyGobbler.balanceOf(john.address)).to.equal(wad.mul(5).mul(995).div(1000));
     expect(await multiplyGobbler.totalSupply()).to.equal(wad.mul(5));
     expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
@@ -308,9 +318,8 @@ describe("Multiply Gobbler tests", () => {
       expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
       expect(await mockArtGobbler.ownerOf(2)).to.equal(multiplyGobbler.address);
       expect(await multiplyGobbler.balanceOf(john.address)).to.equal(wad.mul(5).div(4).mul(995).div(1000));
-      expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(
-        wad.mul(5).add(wad.mul(5).div(4).mul(5).div(1000)),
-      );
+      expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(wad.mul(5));
+      expect(await multiplyGobbler.balanceOf(zeroAddress)).to.equal(wad.mul(5).div(4).mul(5).div(1000)); // tax payment
     });
 
     it("getConversionRate when totalLaggedMultiple > 0", async () => {

@@ -14,7 +14,9 @@
 **/.coverage_contracts
 **/dist
 **/node_modules
+**/.yarn
 **/types
+**/.vscode
 
 # files
 *.env

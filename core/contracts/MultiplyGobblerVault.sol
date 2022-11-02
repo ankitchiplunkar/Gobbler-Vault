@@ -12,7 +12,7 @@ import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 
 /// @title Vault to multiply your Gobblers
 /// @author Ankit Chiplunkar
-/// @notice Use this contract to stake Gobblers and mint based on stratergies
+/// @notice Use this contract to stake Gobblers and mint based on strategies
 /// @dev Contract accepts Gobblers and uses the generated Goo to buy more Gobblers
 contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
@@ -28,7 +28,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     address public taxAddress;
 
     /*//////////////////////////////////////////////////////////////
-                Variables updated each mint    
+                Variables updated each mint
     //////////////////////////////////////////////////////////////*/
     /// @notice The emission multiple after the last mint
     uint256 public lastMintEmissionMultiple;
@@ -139,9 +139,9 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Mints mgob tokens to the receiver
+    /// @notice Mints mGOB tokens to the receiver
     /// @dev If deposit tax is active (0.5% tokens) sends the deposit tax to the owner
-    /// @param multplierToMint the multiplier of the Gobbler deposited
+    /// @param multiplierToMint the multiplier of the Gobbler deposited
     /// @param conversionRate the conversion rate at the time of the erc20 token mint
     /// @param receiver the receiver of the erc20 tokens
     function _mgobMint(
@@ -165,7 +165,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
 
     /// @notice Deposit Gobbler into the vault and get mGOB tokens proportional to multiplier of the Gobbler
     /// @dev This requires an approve before the deposit
-    /// @dev If GooDeposit is non-zero than take goo with Gobbler and also add it into Vault's virtual balance
+    /// @dev If GooDeposit is non-zero then take goo with Gobbler and also add it into Vault's virtual balance
     /// @param id id of the gobbler to mint
     function deposit(uint256 id) public {
         // multiplier of to be deposited gobbler
@@ -183,7 +183,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
         _mgobMint(multiplier, getConversionRate(), msg.sender);
     }
 
-    /// @notice Withdraw Gobbler from the vault and deposit mGOB tokens proportional to multiplier of the Gobbler
+    /// @notice Withdraw Gobbler from the vault and burn mGOB tokens proportional to multiplier of the Gobbler
     /// @dev Cannot withdraw an unrevealed Gobbler i.e. multiplier = 0
     /// @param id id of the gobbler to withdraw
     function withdraw(uint256 id) public {
@@ -196,7 +196,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
         artGobbler.safeTransferFrom(address(this), msg.sender, id);
     }
 
-    /// @notice Deposit Gobbler inbetween mints without depositing any Goo,
+    /// @notice Deposit Gobbler in between mints without depositing any Goo,
     /// @dev Updates the mapping laggingDeposit for the user to be able to claim tokens equal to deposited multiplier
     /// @dev Updates the variable totalLaggedMultiple so that the conversionRate does not change due to a lagged deposit
     /// @dev mGOB tokens can only be claimed after a new Gobbler is minted
@@ -234,7 +234,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
         }
     }
 
-    /// @notice Mint a gobbler form generated Goo
+    /// @notice Mint a gobbler from generated Goo
     /// @dev Any address can call this function and mint a Gobbler
     /// @dev Strategy should return Goo > GobblerPrice() for the transaction to succeed
     /// @dev Also stores emissionMultiple, GooBalance and Timestamp at time of mint
@@ -250,7 +250,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
         emit GobblerMinted(mintedGobbledId[totalMinted]);
     }
 
-    /// @notice Mint a legendary Gobbler form Gobblers in the vault
+    /// @notice Mint a legendary Gobbler from Gobblers in the vault
     /// @dev Any address can call this function and mint a Legendary Gobbler
     /// @dev Adding reentrancy guard since folks can deposit mint and then withdraw instantly after
     function mintLegendaryGobbler(uint256[] calldata gobblerIds) public nonReentrant {

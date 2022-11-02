@@ -168,7 +168,7 @@ describe("Multiply Gobbler tests", () => {
     await mockArtGobbler.setUserEmissionMultiple(multiplyGobbler.address, 5);
     const totalMinted = await multiplyGobbler.totalMinted();
     await multiplyGobbler.connect(deployer).mintGobbler();
-    const mintedGobblerId = await multiplyGobbler.mintedGobbledId(totalMinted);
+    const mintedGobblerId = await multiplyGobbler.mintedGobblerId(totalMinted);
     await mockArtGobbler.unrevealGobbler(mintedGobblerId);
     await expect(multiplyGobbler.connect(deployer).withdraw(mintedGobblerId)).to.be.revertedWithCustomError(
       multiplyGobbler,

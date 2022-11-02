@@ -11,7 +11,7 @@ export function TopBar() {
           <ToMain href="/">
             <span>Gobbler Day Care</span>
             <ToMainBottom>
-              Stake your Gobblers
+              We take care of your gobblers
             </ToMainBottom>
           </ToMain>
           <HeaderNavLinks>

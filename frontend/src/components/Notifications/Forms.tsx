@@ -10,11 +10,11 @@ import { TextBold } from '../../typography/Text'
 import { SectionRow, ContentBlock, ContentRow } from '../base/base'
 import { Button } from '../base/Button'
 import LFeiPool from '../../abi/LFei.json'
-import IERC20 from '../../abi/IERC20.json'
+import ERC20 from '../../abi/ERC20.json'
 import { feiAddress, usdcAddress } from '../Constants'
 import { useTokenBalance } from '@usedapp/core'
 
-const feiInterface = new utils.Interface(IERC20)
+const feiInterface = new utils.Interface(ERC20.abi)
 const lFeiInterface = new utils.Interface(LFeiPool)
 
 interface InteractFeiProps {

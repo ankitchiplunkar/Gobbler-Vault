@@ -5,7 +5,6 @@ import { IArtGobbler } from "./IArtGobbler.sol";
 import { IMintStrategy } from "./IMintStrategy.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import { ERC721TokenReceiver } from "solmate/src/tokens/ERC721.sol";
 import { ReentrancyGuard } from "solmate/src/utils/ReentrancyGuard.sol";
 import { Owned } from "solmate/src/auth/Owned.sol";
 import { LibGOO } from "./LibGOO.sol";
@@ -15,7 +14,7 @@ import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 /// @author Ankit Chiplunkar
 /// @notice Use this contract to stake Gobblers and mint based on stratergies
 /// @dev Contract accepts Gobblers and uses the generated Goo to buy more Gobblers
-contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGuard {
+contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                 ADDRESS VARIABLES
     //////////////////////////////////////////////////////////////*/

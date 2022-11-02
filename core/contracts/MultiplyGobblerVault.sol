@@ -205,11 +205,12 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     function depositWithLag(uint256 id) public {
         // multiplier of to be deposited gobbler
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
-        // transfer art gobbler into the vault
-        artGobbler.safeTransferFrom(msg.sender, address(this), id);
         // update users laggingDeposit amounts
         laggingDeposit[msg.sender][totalMinted] += multiplier;
         totalLaggedMultiple += multiplier;
+
+        // transfer art gobbler into the vault
+        artGobbler.transferFrom(msg.sender, address(this), id);
     }
 
     /// @notice Claim the tokens from a lagged deposit

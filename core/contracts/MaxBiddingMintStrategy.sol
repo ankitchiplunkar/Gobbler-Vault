@@ -40,8 +40,11 @@ contract MaxBiddingMintStrategy is IMintStrategy {
         override
         returns (uint256[] memory)
     {
-        for (uint256 i = 0; i < gobblerIds.length; i++) {
+        for (uint256 i = 0; i < gobblerIds.length; ) {
             if (artGobbler.getGobblerEmissionMultiple(gobblerIds[i]) == 0) revert UnrevealedGobbler();
+            unchecked {
+                ++i;
+            }
         }
         return gobblerIds;
     }

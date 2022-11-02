@@ -218,7 +218,7 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
     /// @dev Updates the variable totalLaggedMultiple so that the conversionRate does not change due to a lagged deposit
     /// @param whenMinted which multipliers to claim
     function claimLagged(uint256[] calldata whenMinted) public {
-        for (uint256 i = 0; i < whenMinted.length; i++) {
+        for (uint256 i = 0; i < whenMinted.length; ) {
             uint256 mintNumber = whenMinted[i];
             // cannot claim deposit if the next gobbler has not been minted
             if (totalMinted <= mintNumber) revert ClaimingInLowerMintWindow();
@@ -229,6 +229,9 @@ contract MultiplyGobblerVault is ERC20, ERC721TokenReceiver, Owned, ReentrancyGu
             _mgobMint(sendersLaggedMultiple, getConversionRate(), msg.sender);
             laggingDeposit[msg.sender][mintNumber] = 0;
             totalLaggedMultiple -= sendersLaggedMultiple;
+            unchecked {
+                ++i;
+            }
         }
     }
 

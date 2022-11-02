@@ -64,7 +64,6 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                 ERRORS
     //////////////////////////////////////////////////////////////*/
-    error GooDepositFailed();
     error TotalMintedIsZero();
     error ClaimingInLowerMintWindow();
     error UnrevealedGobbler();
@@ -109,7 +108,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
             uint256 vaultMultiple = artGobbler.getUserEmissionMultiple(address(this));
             return totalSupply / (vaultMultiple - totalLaggedMultiple);
         }
-        return 10**18;
+        return 1e18;
     }
 
     /// @notice Returns the Goo to be deposited with a Gobbler

@@ -144,17 +144,18 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     /// @param conversionRate the conversion rate at the time of the erc20 token mint
     /// @param receiver the receiver of the erc20 tokens
     function _mgobMint(
-        uint256 multplierToMint,
+        uint256 multiplierToMint,
         uint256 conversionRate,
         address receiver
     ) internal {
+        uint256 mintAmount = multiplierToMint * conversionRate;
         // mint the mGOB tokens to receiver
         if (totalMinted > DEPOSIT_TAX_START_AFTER) {
-            uint256 depositTax = (multplierToMint * conversionRate * TAX_RATE) / PRECISION;
+            uint256 depositTax = (mintAmount * TAX_RATE) / PRECISION;
             _mint(taxAddress, depositTax);
-            _mint(receiver, multplierToMint * conversionRate - depositTax);
+            _mint(receiver, mintAmount - depositTax);
         } else {
-            _mint(receiver, multplierToMint * conversionRate);
+            _mint(receiver, mintAmount);
         }
     }
 

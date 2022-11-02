@@ -28,6 +28,18 @@ Gobbler's are inflationary. Holders will have to **actively** mint Gobblers usin
 - **Gobbler sellers**: Want to sell your gobbler ASAP but don't know hoz to price it efficiently on Opensea? Deposit your Gobbler and sell `mGOB` on Uniswap (you will get the floor price)
 - **Gobbler buyers**: Want to buy a Gobbler but dont have enough Goo. Buy `mGOB` on Uniswap and withdraw a Gobbler.
 
+## Deployments
+
+### Goerli
+
+LibGOO = [0xd637af1db8635b29edf462Cb01c0fe5E11902F3E](https://goerli.etherscan.io/address/0xd637af1db8635b29edf462Cb01c0fe5E11902F3E#code)
+
+MultiplyGobblerVault =
+[0x94f6e4a405e0088944C4D23B58405238289DeCF2](https://goerli.etherscan.io/address/0x94f6e4a405e0088944C4D23B58405238289DeCF2#code)
+
+MaxBiddingMintStrategy =
+[0xa6fC5ef4359783146258f6051cf6457b349B94A1](https://goerli.etherscan.io/address/0xa6fC5ef4359783146258f6051cf6457b349B94A1#code)
+
 ## Usage
 
 ### Pre Requisites

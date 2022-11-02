@@ -5,12 +5,16 @@ import { Button } from '../components/base/Button'
 import { Label } from '../typography/Label'
 import { TextInline } from '../typography/Text'
 import { Title } from '../typography/Title'
-import { useGooBalance, useUserEmissionMultiple } from '../components/hooks'
+import { useGooBalance, useUserEmissionMultiple, useTokenTotalSupply } from '../components/hooks'
+import { MULTIPLY_GOBBLER_ADDRESS } from '../components/Constants'
 
 export function Balance() {
   const { activateBrowserWallet, deactivate, account } = useEthers()
   const userVirtualGooBalance = useGooBalance(account)
   const userEmissionMultiple = useUserEmissionMultiple(account)
+  const vaultVirtualGooBalance = useGooBalance(MULTIPLY_GOBBLER_ADDRESS)
+  const vaultEmissionMultiple = useUserEmissionMultiple(MULTIPLY_GOBBLER_ADDRESS)
+  const vaultTotalSupply = useTokenTotalSupply(MULTIPLY_GOBBLER_ADDRESS)
 
   return (
     <MainContent>
@@ -41,6 +45,31 @@ export function Balance() {
               </ContentRow>            
             )}
           </ContentBlock>
+
+          <SectionRow>
+          </SectionRow>
+          <Title>Pool Data</Title>
+          
+          <SectionRow>
+          <ContentBlock>
+            {vaultVirtualGooBalance && (
+              <ContentRow>
+                <Label>Virtual Goo balance:</Label> <TextInline>{formatEther(vaultVirtualGooBalance)}</TextInline> <Label>GOO</Label>
+              </ContentRow>            
+            )}
+            {vaultEmissionMultiple && (
+              <ContentRow>
+                <Label>Emission multiple:</Label> <TextInline>{formatUnits(vaultEmissionMultiple, 0)}</TextInline> 
+              </ContentRow>            
+            )}
+            {vaultTotalSupply && (
+              <ContentRow>
+                <Label>Total Supply:</Label> <TextInline>{formatEther(vaultTotalSupply)}</TextInline> <Label>mGOB</Label>
+              </ContentRow>            
+            )}
+            </ContentBlock>
+          </SectionRow>
+
 
           <SectionRow>
             <Title>Pool Actions</Title>

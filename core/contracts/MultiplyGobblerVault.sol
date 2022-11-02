@@ -59,7 +59,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     /// @notice Mapping to keep track of which addresses have deposited how many multipliers in which totalMint
     mapping(address => mapping(uint256 => uint256)) public laggingDeposit;
     /// @notice Mapping to keep track of which mintNumber mints which gobblerId
-    mapping(uint256 => uint256) public mintedGobbledId;
+    mapping(uint256 => uint256) public mintedGobblerId;
 
     /*//////////////////////////////////////////////////////////////
                 ERRORS
@@ -223,7 +223,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
             // cannot claim deposit if the next gobbler has not been minted
             if (totalMinted <= mintNumber) revert ClaimingInLowerMintWindow();
             // cannot claim deposit if the minted gobbler has not been revealed
-            uint256 mintedGobblerMultiplier = artGobbler.getGobblerEmissionMultiple(mintedGobbledId[mintNumber]);
+            uint256 mintedGobblerMultiplier = artGobbler.getGobblerEmissionMultiple(mintedGobblerId[mintNumber]);
             if (mintedGobblerMultiplier == 0) revert MintedGobblerUnrevealed();
             uint256 sendersLaggedMultiple = laggingDeposit[msg.sender][mintNumber];
             _mgobMint(sendersLaggedMultiple, getConversionRate(), msg.sender);
@@ -243,12 +243,12 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     /// @dev In expectation of paying less Goo balance on Deposit
     /// @dev They will lose out on minted multiplier rewards by the time they deposit
     function mintGobbler() public {
-        mintedGobbledId[totalMinted] = artGobbler.mintFromGoo(mintStrategy.gobblerMintStrategy(), true);
+        mintedGobblerId[totalMinted] = artGobbler.mintFromGoo(mintStrategy.gobblerMintStrategy(), true);
         lastMintEmissionMultiple = artGobbler.getUserEmissionMultiple(address(this));
         lastMintGooBalance = artGobbler.gooBalance(address(this));
         lastMintTimestamp = block.timestamp;
-        totalMinted += 1;
-        emit GobblerMinted(mintedGobbledId[totalMinted]);
+        ++totalMinted;
+        emit GobblerMinted(mintedGobblerId[totalMinted]);
     }
 
     /// @notice Mint a legendary Gobbler from Gobblers in the vault

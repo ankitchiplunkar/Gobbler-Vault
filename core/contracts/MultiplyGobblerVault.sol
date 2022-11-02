@@ -170,16 +170,16 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     function deposit(uint256 id) public {
         // multiplier of to be deposited gobbler
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
-        // transfer art gobbler into the vault
-        artGobbler.safeTransferFrom(msg.sender, address(this), id);
-        // transfer go debt into the vault
         uint256 gooDeposit = getGooDeposit(multiplier);
         if (gooDeposit > 0) {
-            bool success = goo.transferFrom(msg.sender, address(this), gooDeposit);
-            if (!success) revert GooDepositFailed();
+            // transfer goo debt into the vault
+            // goo token reverts on invalid approval + insufficient balance
+            goo.transferFrom(msg.sender, address(this), gooDeposit);
             // adds any goo erc20 balance into the vaults virtual balance
             artGobbler.addGoo(goo.balanceOf(address(this)));
         }
+        // transfer art gobbler into the vault
+        artGobbler.transferFrom(msg.sender, address(this), id);
         _mgobMint(multiplier, getConversionRate(), msg.sender);
     }
 
@@ -190,6 +190,7 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
         // multiplier of to be withdrawn gobbler
         uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
         if (multiplier == 0) revert UnrevealedGobbler();
+
         // burn the mGOB tokens to depositor
         _burn(msg.sender, multiplier * getConversionRate());
         // transfer art gobbler to the withdrawer

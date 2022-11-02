@@ -163,6 +163,11 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
                 STATE CHANGING PUBLIC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
+    /// @notice Converts all erc20 goo into virtual goo
+    function addGoo() public {
+        artGobbler.addGoo(goo.balanceOf(address(this)));
+    }
+
     /// @notice Deposit Gobbler into the vault and get mGOB tokens proportional to multiplier of the Gobbler
     /// @dev This requires an approve before the deposit
     /// @dev If GooDeposit is non-zero then take goo with Gobbler and also add it into Vault's virtual balance

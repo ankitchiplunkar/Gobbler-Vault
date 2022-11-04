@@ -6,10 +6,11 @@ import { Label } from '../typography/Label'
 import { TextInline } from '../typography/Text'
 import { Title } from '../typography/Title'
 import { useGooBalance, useUserEmissionMultiple, useTokenTotalSupply } from '../components/hooks'
+import { ApproveGobblersComponent } from '../components/Notifications/Forms'
 import { MULTIPLY_GOBBLER_ADDRESS } from '../components/Constants'
 
 export function Balance() {
-  const { activateBrowserWallet, deactivate, account } = useEthers()
+  const { activateBrowserWallet, deactivate, account, library } = useEthers()
   const userVirtualGooBalance = useGooBalance(account)
   const userEmissionMultiple = useUserEmissionMultiple(account)
   const vaultVirtualGooBalance = useGooBalance(MULTIPLY_GOBBLER_ADDRESS)
@@ -74,6 +75,10 @@ export function Balance() {
           <SectionRow>
             <Title>Pool Actions</Title>
           </SectionRow>
+
+          <ContentBlock>
+                {account && library && <ApproveGobblersComponent poolAddress={MULTIPLY_GOBBLER_ADDRESS} account={account} library={library} />}
+          </ContentBlock>
         </Section>
       </Container>
     </MainContent>

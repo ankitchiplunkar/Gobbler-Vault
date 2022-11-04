@@ -1,40 +1,35 @@
 import type { BigNumber } from '@ethersproject/bignumber'
 import { Contract } from '@ethersproject/contracts'
 import type { Web3Provider } from '@ethersproject/providers'
-import { formatEther, formatUnits } from '@ethersproject/units'
+import { formatEther } from '@ethersproject/units'
 import { useContractCall, useContractFunction, useTokenAllowance } from '@usedapp/core'
 import { utils } from 'ethers'
 import { useState } from 'react'
 import styled from 'styled-components'
 import { TextBold } from '../../typography/Text'
-import { SectionRow, ContentBlock, ContentRow } from '../base/base'
+import { SectionRow } from '../base/base'
 import { Button } from '../base/Button'
-import LFeiPool from '../../abi/LFei.json'
-import ERC20 from '../../abi/ERC20.json'
-import { feiAddress, usdcAddress } from '../Constants'
-import { useTokenBalance } from '@usedapp/core'
 
-const feiInterface = new utils.Interface(ERC20.abi)
-const lFeiInterface = new utils.Interface(LFeiPool)
+import { ArtGobblersInterface } from '../../abi'
+import { ART_GOBBLER_ADDRESS } from '../Constants'
 
-interface InteractFeiProps {
+interface InteractProps {
   poolAddress: string
   account: string
   library: Web3Provider
 }
 
 
-export const ApproveFei = ({ poolAddress, account, library }: InteractFeiProps) => {
-  const contract = new Contract(feiAddress, feiInterface, library.getSigner())
-  const { send } = useContractFunction(contract, 'approve')
+export const ApproveGobblers = ({ poolAddress, account, library }: InteractProps) => {
+  const contract = new Contract(ART_GOBBLER_ADDRESS, ArtGobblersInterface, library.getSigner())
+  const { send } = useContractFunction(contract, 'setApprovalForAll')
   const [value, setValue] = useState('0')
   return (
     <SectionRow>
-      <label>Approve Fei (approve the amount you want to deposit)</label>
-      <Input type="number" step="1" value={value} onChange={(e) => setValue(e.currentTarget.value)} />
+      <label>Approve Gobblers (approve the transfer of gobblers to vault)</label>
       <SmallButton
         onClick={(e) => {
-          send(poolAddress, utils.parseEther(value))
+          send(poolAddress, true)
           setValue('0')
         }}
       >
@@ -44,7 +39,25 @@ export const ApproveFei = ({ poolAddress, account, library }: InteractFeiProps) 
   )
 }
 
+export const ApproveGobblersComponent = ({ poolAddress, account, library }: InteractProps) => {
+  const contract = new Contract(ART_GOBBLER_ADDRESS, ArtGobblersInterface, library.getSigner()) as any
 
+  const { state, send } = useContractFunction(contract, 'setApprovalForAll')
+  const { status } = state
+
+  const approveGobblers = () => {
+    void send(poolAddress, true)
+  }
+
+  return (
+    <div>
+      <button onClick={() => approveGobblers()}>Approve Gobblers</button>
+      <p>Status: {status}</p>
+    </div>
+  )
+}
+
+/*
 export const DepositFei = ({ poolAddress, account, library }: InteractFeiProps) => {
   const contract = new Contract(poolAddress, lFeiInterface, library.getSigner())
   const { send } = useContractFunction(contract, 'depositFei')
@@ -91,34 +104,7 @@ export const WithdrawFei = ({ poolAddress, account, library }: InteractFeiProps)
     </SectionRow>
   )
 }
-
-export const WithdrawUSDC = ({ poolAddress, account, library }: InteractFeiProps) => {
-  const contract = new Contract(poolAddress, lFeiInterface, library.getSigner())
-  const { send } = useContractFunction(contract, 'withdrawUSDC')
-  const [value, setValue] = useState('0')
-  const [withdrawableUSDC] = useContractCall({
-    abi: lFeiInterface,
-    address: poolAddress,
-    method: "withdrawableUSDC",
-    args: [account]
-  }) ?? []
-  
-  return (
-    <SectionRow>
-      {withdrawableUSDC && <label>Withdraw USDC from Pool (can withdraw {formatUnits(withdrawableUSDC, 6)})</label>}
-      <Input type="number" step="1" value={value} onChange={(e) => setValue(e.currentTarget.value)} />
-      <SmallButton
-        onClick={(e) => {
-          send(utils.parseUnits(value, 6))
-          setValue('0')
-        }}
-      >
-        Withdraw
-        </SmallButton>
-    </SectionRow>
-  )
-}
-
+*/
 const SmallButton = styled(Button)`
   min-width: unset;
   height: unset;

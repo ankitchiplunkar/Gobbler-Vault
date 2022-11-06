@@ -151,7 +151,7 @@ describe("Multiply Gobbler tests", () => {
     expect(await mockArtGobbler.ownerOf(1)).to.equal(multiplyGobbler.address);
   });
 
-  it.only("can deposit using safeTransferFrom", async () => {
+  it("can deposit using safeTransferFrom", async () => {
     const balanceAfter = wad.mul(5);
     expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(0);
     await mockArtGobbler
@@ -162,7 +162,7 @@ describe("Multiply Gobbler tests", () => {
     expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
   });
 
-  it.only("deposit using safeTransferFrom when there are more multipliers due to extra minting", async () => {
+  it("deposit using safeTransferFrom when there are more multipliers due to extra minting", async () => {
     await multiplyGobbler.connect(deployer).deposit(0);
     const balanceBefore = wad.mul(5);
     expect(await multiplyGobbler.balanceOf(deployer.address)).to.equal(balanceBefore);
@@ -283,7 +283,7 @@ describe("Multiply Gobbler tests", () => {
     expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
   });
 
-  it.only("deposit using safeTransferFrom when gooDeposit is non zero", async () => {
+  it("deposit using safeTransferFrom when gooDeposit is non zero", async () => {
     await multiplyGobbler.connect(deployer).mintGobbler();
     await multiplyGobbler.connect(deployer).mintGobbler();
     await multiplyGobbler.connect(deployer).mintGobbler();
@@ -301,7 +301,7 @@ describe("Multiply Gobbler tests", () => {
     expect(await mockArtGobbler.ownerOf(0)).to.equal(multiplyGobbler.address);
   });
 
-  it.only("deposit using safeTransferFrom when depositTax is non-zero", async () => {
+  it("deposit using safeTransferFrom when depositTax is non-zero", async () => {
     // minting 3 tokens to trigger deposit tax
     await multiplyGobbler.connect(deployer).mintGobbler();
     await multiplyGobbler.connect(deployer).mintGobbler();
@@ -312,9 +312,10 @@ describe("Multiply Gobbler tests", () => {
     await mockArtGobbler.connect(deployer).transferFrom(deployer.address, john.address, 0);
     await mockGoo.connect(deployer).transfer(john.address, wad.mul(100));
     await mockGoo.connect(john).approve(multiplyGobbler.address, wad.mul(100));
+    console.log("reached here");
     await mockArtGobbler
       .connect(john)
-      ["safeTransferFrom(address,address,uint256)"](deployer.address, multiplyGobbler.address, 0);
+      ["safeTransferFrom(address,address,uint256)"](john.address, multiplyGobbler.address, 0);
     // verifying final balances
     expect(await multiplyGobbler.balanceOf(zeroAddress)).to.equal(wad.mul(5).mul(5).div(1000)); // tax payment
     expect(await multiplyGobbler.balanceOf(john.address)).to.equal(wad.mul(5).mul(995).div(1000));

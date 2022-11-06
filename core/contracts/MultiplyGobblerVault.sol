@@ -6,6 +6,7 @@ import { IMintStrategy } from "./IMintStrategy.sol";
 import { ERC20 } from "solmate/src/tokens/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { ReentrancyGuard } from "solmate/src/utils/ReentrancyGuard.sol";
+import { ERC721TokenReceiver } from "solmate/src/tokens/ERC721.sol";
 import { Owned } from "solmate/src/auth/Owned.sol";
 import { LibGOO } from "./LibGOO.sol";
 import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
@@ -14,7 +15,7 @@ import { toDaysWadUnsafe } from "solmate/src/utils/SignedWadMath.sol";
 /// @author Ankit Chiplunkar
 /// @notice Use this contract to stake Gobblers and mint based on strategies
 /// @dev Contract accepts Gobblers and uses the generated Goo to buy more Gobblers
-contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
+contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard, ERC721TokenReceiver {
     /*//////////////////////////////////////////////////////////////
                 ADDRESS VARIABLES
     //////////////////////////////////////////////////////////////*/
@@ -159,6 +160,23 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
         }
     }
 
+    /// @notice Function to be run after we receive a gobbler deposit
+    /// @param from sender of the token to the vault
+    /// @param id id of the gobbler to deposit
+    function _postGobblerDeposit(address from, uint256 id) internal {
+        // multiplier of to be deposited gobbler
+        uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
+        uint256 gooDeposit = getGooDeposit(multiplier);
+        if (gooDeposit > 0) {
+            // transfer goo debt into the vault
+            // goo token reverts on invalid approval + insufficient balance
+            goo.transferFrom(from, address(this), gooDeposit);
+            // adds any goo erc20 balance into the vaults virtual balance
+            artGobbler.addGoo(goo.balanceOf(address(this)));
+        }
+        _mgobMint(multiplier, getConversionRate(), from);
+    }
+
     /*//////////////////////////////////////////////////////////////
                 STATE CHANGING PUBLIC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -171,21 +189,12 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
     /// @notice Deposit Gobbler into the vault and get mGOB tokens proportional to multiplier of the Gobbler
     /// @dev This requires an approve before the deposit
     /// @dev If GooDeposit is non-zero then take goo with Gobbler and also add it into Vault's virtual balance
-    /// @param id id of the gobbler to mint
+    /// @param id id of the gobbler to deposit
     function deposit(uint256 id) public {
-        // multiplier of to be deposited gobbler
-        uint256 multiplier = artGobbler.getGobblerEmissionMultiple(id);
-        uint256 gooDeposit = getGooDeposit(multiplier);
-        if (gooDeposit > 0) {
-            // transfer goo debt into the vault
-            // goo token reverts on invalid approval + insufficient balance
-            goo.transferFrom(msg.sender, address(this), gooDeposit);
-            // adds any goo erc20 balance into the vaults virtual balance
-            artGobbler.addGoo(goo.balanceOf(address(this)));
-        }
         // transfer art gobbler into the vault
         artGobbler.transferFrom(msg.sender, address(this), id);
-        _mgobMint(multiplier, getConversionRate(), msg.sender);
+        // performing post deposit operations
+        _postGobblerDeposit(msg.sender, id);
     }
 
     /// @notice Withdraw Gobbler from the vault and burn mGOB tokens proportional to multiplier of the Gobbler
@@ -281,5 +290,19 @@ contract MultiplyGobblerVault is ERC20, Owned, ReentrancyGuard {
         address oldTaxAddress = taxAddress;
         taxAddress = _newTaxAddress;
         emit TaxAddressChanged(oldTaxAddress, _newTaxAddress);
+    }
+
+    /// @notice Completes deposit on transfer of the tokens
+    /// @param _from address of the sender of the token
+    /// @param _tokenId id of the token being deposited
+    function onERC721Received(
+        address,
+        address _from,
+        uint256 _tokenId,
+        bytes calldata
+    ) external override returns (bytes4) {
+        // perform post deposit operations
+        _postGobblerDeposit(_from, _tokenId);
+        return ERC721TokenReceiver.onERC721Received.selector;
     }
 }
